@@ -1,0 +1,26 @@
+# runtime / sprint scratch
+.sdlc/
+reports/runs/
+reports/*.md
+eval/runs/
+
+# build artifacts
+target/
+node_modules/
+/dist/
+
+# debug screenshots (§6.4) — doc screenshots under docs/screenshots/ ARE committed
+.playwright-mcp/
+
+# secrets — never commit credentials (§1.4)
+.env
+.env.*
+*.key
+*.pem
+*.p12
+secrets/
+
+# editor / language scratch
+.DS_Store
+__pycache__/
+*.pyc

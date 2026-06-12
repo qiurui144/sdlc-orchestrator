@@ -1,0 +1,9 @@
+language: python
+build: python -m build
+test_unit: pytest tests/unit -v
+test_integration: pytest tests/integration -v
+test_all: pytest -v
+lint: ruff check . && mypy .
+clean: find . -type d -name __pycache__ -exec rm -rf {} +; rm -rf .pytest_cache dist build *.egg-info
+target_size_estimator: |
+  du -sh .venv 2>/dev/null; du -sh .pytest_cache 2>/dev/null

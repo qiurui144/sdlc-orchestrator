@@ -1,0 +1,14 @@
+{
+  "name": "sdlc-orchestrator",
+  "owner": { "name": "qiurui144", "email": "happyqiuqiu9604@gmail.com" },
+  "plugins": [
+    {
+      "name": "sdlc-orchestrator",
+      "description": "Stack-agnostic SDLC orchestration for Claude Code: 18 agents, 27 skills, 30 slash commands, 3 hooks. Spec → plan → impl → review → test → release plus common SE practices. Parallel orchestration + Challenger Panel (consensus-auto).",
+      "author": { "name": "qiurui144", "email": "happyqiuqiu9604@gmail.com" },
+      "category": "workflow",
+      "source": "./",
+      "homepage": "https://github.com/qiurui144/sdlc-orchestrator"
+    }
+  ]
+}

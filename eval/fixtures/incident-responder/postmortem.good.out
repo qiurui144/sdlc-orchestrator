@@ -1,0 +1,18 @@
+# Postmortem: search outage
+## Summary
+ES node OOM-killed; search degraded 25min for 60% users.
+## Timeline (UTC+8)
+- 14:30 node evicted - 14:40 diagnosed - 14:55 node back
+## Impact
+60% of users, 25 min, no data loss.
+## Root cause (5-Why)
+1. node OOM-killed → 2. memory limit 4Gi < index 5Gi → 3. limit never adjusted as index
+grew → 4. no alert on index-size growth → 5. no periodic capacity review in our ops SOP.
+Deepest why: the ops process has no capacity-review step — a PROCESS gap, not just a config value.
+## Resolution
+Raised limit to 8Gi AND added the missing process control.
+## Lessons learned
+Config fixes don't prevent recurrence without a process control.
+## Action items
+- @sre add Prometheus alert on index-size growth, due 2026-06-05
+- @sre-lead add weekly capacity review to ops runbook, due 2026-06-15

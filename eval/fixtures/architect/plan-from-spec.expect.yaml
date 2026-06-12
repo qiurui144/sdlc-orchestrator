@@ -1,0 +1,13 @@
+agent: architect
+case: plan-from-spec
+seeds: 3
+assertions:
+  - kind: all_present
+    # assert the TDD failing-test-first CONTRACT, not the exact writing-plans template
+    # heading — architect reliably produces "failing test" steps in varied phrasing
+    # (eval 2026-05-30: pinning "Write the failing test" verbatim was 0/3 false-negative).
+    of: ["failing test", "Commit", "Task"]
+  - kind: any_present
+    of: ["risk", "carry-over", "GA acceptance", "GA accept"]
+  - kind: any_present
+    of: ["parallel", "Pgroup", "dependenc", "sequential"]

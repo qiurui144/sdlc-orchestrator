@@ -1,0 +1,10 @@
+agent: pr-reviewer
+case: two-round
+seeds: 3
+assertions:
+  - kind: all_present
+    of: ["Round 1", "Round 2"]
+  - kind: any_present
+    of: ["Critical", "Important", "Nit"]
+  - kind: any_present
+    of: ["panic", "unwrap", "edge", "error handling", "no flag"]

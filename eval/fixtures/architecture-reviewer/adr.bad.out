@@ -1,0 +1,11 @@
+# ADR 0001: adopt clap
+## Context
+We need flag parsing.
+## Decision
+Use clap.
+## Status
+Proposed.
+## Consequences
+We will use clap for parsing. Flags will be parsed by clap. The code will use clap.
+## Alternatives
+None considered.

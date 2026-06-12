@@ -1,0 +1,13 @@
+# key	en	zh  (human-facing prose only; technical tokens stay English)
+gate.advance	Gate passed — advancing	门通过 —— 推进
+gate.escalate	Escalation needed — pausing for human	需人工裁决 —— 暂停待人
+status.sprint	Sprint	冲刺
+status.phase	Phase	阶段
+status.inflight	In-flight (background)	在途（后台）
+status.next	Recommended next	建议下一步
+status.none	none	无
+scorecard.title	Project health scorecard	项目健康记分卡
+scorecard.risk	Top risks	主要风险
+disk.redline	Disk redline — aborting	磁盘红线 —— 中止
+panel.consensus	Panel consensus — auto-advancing	专家组共识 —— 自动推进
+release.tag	Release tag created (local)	发布 tag 已创建（本地）

@@ -1,0 +1,57 @@
+# config/risk-rules.yaml — risk-classify.sh pattern data (zero-LLM). STEP-0 SELF-GUARDED:
+# any edit to this file classifies HIGH (fix #2) — the classifier cannot rewrite its own policy
+# on the fast-path. Patterns are ERE (grep -E). Adding HIGH/NORMAL triggers only ever WIDENS
+# full-rigor (safe direction). Narrowing LOW eligibility requires a spec + adversarial re-vet (§6).
+
+# STEP 0 — self-referential guard (path match → HIGH unconditionally). Authoritative.
+# Covers the REVIEW/SAFETY machinery itself: fast-pathing a guard routes a change AROUND the very
+# thing that guard does (G3 found: neutering lenses/security.md would skip the adversarial reviewer).
+self_guard:
+  - 'skills/(risk-classify|dispatch-prompt|challenger-panel)/'   # classifier + the adversarial-review lenses
+  - 'eval/(grade|judge|run-eval)\.sh'                            # the eval graders
+  - 'config/risk-rules\.yaml'
+  - 'config/context-map\.yaml'
+  - 'docs/superpowers/specs/2026-06-06-accurate-fast-orchestration\.md'
+
+# STEP 1 — HIGH path triggers (any path match → HIGH). Authoritative.
+high:
+  - 'auth|login|session|token|secret|credential|crypto|password'
+  - 'migration|schema|\.sql$|migrate'
+  - '\.github/workflows/'                  # CI yaml — command-bearing
+  - 'prod.*deploy|force.*push|drop[ ]+table'   # irreversible markers
+
+# STEP 1 body — ADVISORY only (path triggers above are authoritative; body scan never demotes).
+high_body_advisory:
+  - 'stride|spoofing|tampering|repudiation|elevation'
+
+# STEP 2 — NORMAL triggers (any → NORMAL). "logic/executable changes never skip adversarial review".
+normal:
+  - '\.(rs|go|py|js|ts|c|cc|cpp|h|hpp|java|rb)$'          # source
+  - 'tests/|\.bats$|_test\.|/test_'                        # tests
+  - 'config/.*\.yaml$|\.ya?ml$|\.toml$|\.json$|\.sh$|Makefile$|\.mk$'  # command/behavior-bearing config (value-only counts, fix #1)
+  # G3 fix: behavior-bearing MARKDOWN — for an LLM-driven tool the .md BODY is the executable artifact
+  # (agent prompts / slash-command defs / skill instructions / Challenger lenses). NOT prose → never LOW.
+  - '^(agents|commands|skills)/.*\.md$'                    # plugin behavior-bearing markdown
+  - '(^|/)CLAUDE\.md$'                                     # AI working instructions — behavior-bearing
+  - '(^|/)requirements[^/]*\.txt$'                         # pip-installed dependency manifest — behavior-bearing
+
+# STEP 3 — LOW = POSITIVE BASENAME ALLOWLIST of KNOWN-INERT PROSE DOCS ONLY
+# (fix #1 + re-G1 fix #6 + G3 inversion). DEFAULT-DENY applied to markdown: `\.md` is NOT blanket
+# LOW-eligible — for an LLM-driven tool markdown is the EXECUTABLE medium (agent prompts / command
+# defs / skills / Challenger lenses / dispatch templates / eval fixtures). G3 adversarial review found
+# behavior-bearing .md reaching LOW TWICE (lenses, then templates + eval/fixtures); enumerating
+# behavior-bearing dirs is whack-a-mole, so the robust fix is to allowlist ONLY the universal PROSE
+# doc filenames and route every OTHER .md/.txt to NORMAL by default. Matched against BASENAME.
+# A new behavior-bearing .md is safe-by-default (NORMAL), never a future hole. (`.txt` dropped from
+# LOW entirely: requirements.txt/runtime.txt are behavior-bearing; a genuine prose .txt → NORMAL is fine.)
+low_allow:
+  - '^README\.md$'
+  - '^README\.[a-z][a-z]\.md$'    # README.zh.md / README.fr.md etc.
+  - '^DEVELOP\.md$'
+  - '^RELEASE\.md$'
+  - '^CHANGELOG\.md$'
+  - '^CONTRIBUTING\.md$'
+  - '^SECURITY\.md$'
+  - '^ACKNOWLEDGMENTS\.md$'
+  - '^LICENSE$'
+  - '^LICENSE\.md$'

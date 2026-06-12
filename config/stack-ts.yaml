@@ -1,0 +1,9 @@
+language: ts
+build: npm run build
+test_unit: npm test
+test_integration: npm run test:integration
+test_all: npm test && (npm run test:integration || true)
+lint: npm run lint
+clean: rm -rf node_modules dist .next
+target_size_estimator: |
+  du -sh node_modules/ dist/ 2>/dev/null || echo 0

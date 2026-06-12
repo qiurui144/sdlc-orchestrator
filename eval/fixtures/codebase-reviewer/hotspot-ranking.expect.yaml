@@ -1,0 +1,16 @@
+agent: codebase-reviewer
+case: hotspot-ranking
+seeds: 3
+# big_handler.py must rank #1 across all 3 seeds (CLAUDE.md §2.3):
+#   258 lines + FIXME marker + no test file + planted null-deref bug
+#   vs utils.py (15 lines, clean) and config.py (9 lines, clean)
+assertions:
+  - kind: any_present
+    of: [big_handler, big_handler.py]     # top hotspot identified by name
+  - kind: any_present
+    of: [WARN, FAIL, BLOCK, warn, fail, block]  # verdict on hotspot
+  - kind: any_present
+    of: [FIXME, "no test", untested, "missing test"]  # marker/coverage signal surfaced
+  - kind: any_present
+    of: ["metadata", "None", "NullPointer", "null", "null-deref", "AttributeError",
+         "TypeError", "discount", "KeyError"]  # null-deref bug called out

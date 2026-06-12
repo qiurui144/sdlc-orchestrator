@@ -1,0 +1,20 @@
+agent: task-orchestrator
+case: a3-spotcheck
+seeds: 3
+# A3 behavioral contract (v0.27.0): the orchestrator must (1) parallel-dispatch the
+# independent NORMAL tasks, (2) spot-check the producer-self_scored artifact, (3) FULL-re-run
+# the missing-self_score and the HIGH-risk ones, (4) NEVER spot-check the deterministic net.
+# grep -qiF (case-insensitive fixed-string) — phrasings kept robust per the architect-fixture
+# lesson (over-pinning verbatim → false negatives). Assertions chosen to DISCRIMINATE a wrong
+# answer (see a3-spotcheck.bad.out: serial + spot-check-everything fails 1/3/5).
+assertions:
+  - kind: any_present          # A3a: independent NORMAL tasks dispatched in parallel/batch
+    of: ["parallel", "batch", "fan-out", "fan out", "concurrent"]
+  - kind: any_present          # A3b: the producer-self_scored T_a is spot-checked (not full-re-run)
+    of: ["spot-check", "spot check"]
+  - kind: any_present          # A3b: the exceptions (missing self_score / HIGH) get a FULL re-run
+    of: ["full re-run", "full-re-run", "re-run in full", "fully re-run", "re-run them in full"]
+  - kind: any_present          # A3b: HIGH-risk T_d is recognized as full-rigor
+    of: ["high-risk", "high risk", "HIGH"]
+  - kind: any_present          # load-bearing safety invariant: the deterministic net is never spot-checked
+    of: ["never spot-check", "never spot check", "always run in full", "always full", "always runs in full"]

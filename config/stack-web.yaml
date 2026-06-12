@@ -1,0 +1,12 @@
+# config/stack-web.yaml — web-UI command adapter. Commands by config; NO hardcoded tool
+# versions (Hard constraint: adapters reference commands, not versions). The package manager
+# is whatever the target repo uses; these are the conventional npm-script entry points.
+language: web
+build: npm run build
+serve: npm run preview
+e2e: npm run test:e2e
+lint_a11y: npx --no-install lighthouse-ci || true
+visual_baseline_dir: tests/screenshots
+screenshot_dir: docs/screenshots
+target_size_estimator: |
+  du -sh node_modules dist build 2>/dev/null

@@ -1,0 +1,6 @@
+[package]
+name = "hello-world"
+version = "0.1.0"
+edition = "2021"
+description = "Tiniest Rust project used as the sdlc-orchestrator end-to-end demo target."
+license = "MIT"

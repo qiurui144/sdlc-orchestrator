@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: shellcheck all scripts (-x follows sourced files)
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            shellcheck -x "$f" || fail=1
+          done < <(find hooks skills config scripts eval tests -name '*.sh' 2>/dev/null)
+          [ "$fail" -eq 0 ] || { echo "shellcheck found issues"; exit 1; }
+      - name: doc-structure audit (§3.2, strict)
+        run: bash scripts/doc-audit.sh --strict
+
+  test:
+    strategy:
+      fail-fast: false   # let both platforms run so each surfaces its own issues
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record bash version
+        run: bash --version | head -1
+
+      - name: Install deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats jq
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Install deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install bats-core jq yq
+
+      - name: Tool versions
+        run: |
+          bats --version
+          jq --version
+          yq --version
+
+      - name: Run test suite
+        run: ./tests/run-all.sh

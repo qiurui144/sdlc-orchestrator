@@ -1,0 +1,16 @@
+# Postmortem: search outage
+## Summary
+Search was down 25min.
+## Timeline (UTC+8)
+- 14:30 down  - 14:55 up
+## Impact
+60% users, 25 min.
+## Root cause (5-Why)
+The Elasticsearch node was OOM-killed. Root cause: memory limit too low. We fixed it by
+raising the limit. That's the root cause: the limit was too low.
+## Resolution
+Raised memory limit to 8Gi.
+## Lessons learned
+Memory limits matter.
+## Action items
+- @sre raise limit (done), due 2026-06-01

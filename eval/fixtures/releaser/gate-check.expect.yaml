@@ -1,0 +1,10 @@
+agent: releaser
+case: gate-check
+seeds: 3
+assertions:
+  - kind: any_present                 # must FAIL: missing Migration + Known Limitations
+    of: [FAIL, fail, refuse, blocked, "not PASS"]
+  - kind: any_present                 # must invoke rule 11: real CI green required
+    of: ["CI", "observed-green", "real CI", "rule 11"]
+  - kind: all_present
+    of: [Gate, RELEASE]

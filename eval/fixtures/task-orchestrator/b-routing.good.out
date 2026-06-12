@@ -1,0 +1,15 @@
+B path-depth routing:
+
+1. **Change A (LOW)** — run the **fast-path**: impl+review only, skipping the slow spec/plan/panel
+   design ceremony. BUT the deterministic safety net (doc-audit --strict / ci-status / diff-guard /
+   shellcheck / full bats suite) **still runs in full** — it runs on EVERY path including LOW, never
+   skipped. The fast-path skips slow LLM ceremony, not the mechanical net.
+
+2. **Change B (HIGH)** — **full rigor**: the complete spec→plan→impl→review→test path, with Challenger
+   **panel size 5** (`SDLC_PANEL_HIGH_RISK_SIZE`) and the judgment (human-signed) model tier.
+
+3. **--full on Change A** — forces **full rigor**; `--full` always wins (safe direction), so Change A
+   runs the full ceremony regardless of its LOW classification.
+
+4. **--fast on Change B** — **no**. `--fast` is **advisory only** and can **never demote** a NORMAL/HIGH
+   change to LOW; Change B is HIGH (auth), so it **still runs full rigor** even with `--fast`.

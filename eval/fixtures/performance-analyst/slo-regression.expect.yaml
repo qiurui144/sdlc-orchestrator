@@ -1,0 +1,10 @@
+agent: performance-analyst
+case: slo-regression
+seeds: 3
+assertions:
+  - kind: all_present
+    of: [metric, target, window, budget]
+  - kind: any_present
+    of: ["regression", "baseline", "2σ", "2 sigma", "2sigma", "p99"]
+  - kind: any_present
+    of: ["multi-seed", "N=3", "seed", "mean"]

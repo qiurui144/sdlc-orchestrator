@@ -1,0 +1,9 @@
+language: rust
+build: cargo build --release
+test_unit: cargo test --lib
+test_integration: cargo test --test '*'
+test_all: cargo test --workspace
+lint: cargo clippy --workspace --all-targets -- -D warnings
+clean: cargo clean
+target_size_estimator: |
+  du -sh target/ 2>/dev/null || echo 0

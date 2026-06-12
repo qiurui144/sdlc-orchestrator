@@ -1,0 +1,21 @@
+# templates/handoff-template.yaml
+# Handoff between SDLC phases. schema_version=1 (v0.1.0).
+# REQUIRED fields marked with #!
+schema_version: 1                              #! integer, currently 1
+sprint_id: 2026-05-28-<slug>                   #! kebab-case
+phase_from: spec | plan | impl | review | test #! one of allowed values
+phase_to:   plan | impl | review | test | release #! one of allowed; transition matrix enforced
+artifact_path: <relative-to-repo-root>         #! string
+artifact_sha: <git hash-object output>         #! string
+
+# Optional context (recommended)
+deliverables_proposed: []                      # list of file paths
+risks_to_flag_in_plan: []                      # carried from spec §11
+deviations: []                                 # only set if scope-drift detected
+disk_snapshot_before:                          # df -h snapshot (helps post-mortem)
+  root_avail_gb: 0
+  data_avail_gb: 0
+  tmp_avail_gb: 0
+estimated_tokens: 0                            # LLM cost estimate
+estimated_duration_hours: 0                    # wall-clock estimate per §1.2
+timestamp_utc8: 2026-05-28T00:00:00+08:00      #! ISO 8601

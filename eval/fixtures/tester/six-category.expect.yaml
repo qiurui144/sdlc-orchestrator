@@ -1,0 +1,8 @@
+agent: tester
+case: six-category
+seeds: 3
+assertions:
+  - kind: all_present
+    of: [happy, edge, error, adversarial, concurrent, resource]
+  - kind: any_present
+    of: ["cargo test", "cargo", "multi-seed", "N=3", "seed"]

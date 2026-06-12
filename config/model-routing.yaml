@@ -1,0 +1,12 @@
+# config/model-routing.yaml — tier → provider policy for SDLC multi-model routing (M1).
+# DEFAULT IS CONSERVATIVE: enabled=false => every tier routes to claude (zero behavior change).
+# Opt in by setting enabled: true here OR exporting SDLC_MULTI_MODEL=1 (env wins).
+# NORMAL stays claude until M2 eval clears a task-type >= floor; HIGH is ALWAYS claude (never externalized).
+enabled: false
+low_provider: deepseek
+low_model: deepseek-v4-flash
+# reserved for M2 — M1 route.sh hardcodes claude for NORMAL/HIGH regardless of these keys
+normal_provider: claude
+normal_model: ""
+high_provider: claude
+high_model: ""

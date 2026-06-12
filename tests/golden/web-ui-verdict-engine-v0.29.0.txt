@@ -1,0 +1,36 @@
+snap="${SDLC_WEBUI_SNAPSHOT:-}"; con="${SDLC_WEBUI_CONSOLE:-}"; net="${SDLC_WEBUI_NETWORK:-}"
+dom_bid="${SDLC_WEBUI_DOM_BUILD_ID:-}"
+verdict=PASS; reason="contract met, browser-verified"
+i=0
+while [ "$i" -lt "$nroutes" ]; do
+  ptxt=$(yq -r ".routes[$i].positive.text // \"\"" "$criteria")
+  # belt-and-suspenders (re-G3): an empty positive text is vacuous — `*""*` matches anything incl. a
+  # blank page. The contract parse already exit-7s this, but never let it reach the glob.
+  [ -z "$ptxt" ] && { verdict=FAIL; reason="empty positive text (vacuous — would match any page)"; break; }
+  # 1 positive present
+  case "$snap" in *"$ptxt"*) ;; *) verdict=FAIL; reason="positive text '$ptxt' absent (200 but not rendered)"; break;; esac
+  # 2 negative absent
+  nneg=$(yq -r ".routes[$i].negative | length" "$criteria"); j=0
+  while [ "$j" -lt "$nneg" ]; do
+    neg=$(yq -r ".routes[$i].negative[$j]" "$criteria")
+    case "$snap" in *"$neg"*) verdict=FAIL; reason="negative marker present: $neg (placeholder/error rendered)"; break 2;; esac
+    j=$((j+1))
+  done
+  i=$((i+1))
+done
+# 3 zero console-error (re-G3 S2: broadened beyond "error" — Uncaught/SEVERE/Refused/Failed-to-load.
+#    Real browser_console_messages format normalization is PENDING-VERIFY.)
+if [ "$verdict" = PASS ]; then case "$con" in
+  *error*|*Error*|*ERROR*|*Uncaught*|*SEVERE*|*Refused*|*"Failed to load"*) verdict=FAIL; reason="console error present";;
+esac; fi
+# 4 zero failed-network 4xx/5xx (re-G3 S1: status token after a delimiter — " 404"/"[404]"/"=404"/":404"
+#    — so it isn't missed when formatted without a leading space. Real format normalization is PENDING-VERIFY.)
+if [ "$verdict" = PASS ]; then case "$net" in
+  *' '[45][0-9][0-9]*|*'['[45][0-9][0-9]*|*'='[45][0-9][0-9]*|*':'[45][0-9][0-9]*) verdict=FAIL; reason="failed asset request (4xx/5xx)";;
+esac; fi
+# 5 build fresh (DOM build_id == contract build_id)
+if [ "$verdict" = PASS ] && [ "$dom_bid" != "$build_id" ]; then verdict=FAIL; reason="stale build: DOM build_id '$dom_bid' != contract '$build_id'"; fi
+
+echo "verdict:      $verdict"
+echo "reason:       $reason"
+echo "evidence:     reports/runs/${SDLC_RUN_TS:-pending}_web-ui/verdict.txt"

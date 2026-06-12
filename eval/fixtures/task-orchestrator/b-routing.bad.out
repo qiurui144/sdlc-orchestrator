@@ -1,0 +1,10 @@
+B path-depth routing:
+
+1. Change A is LOW, so I'll fast-path it and to save even more time I'll also skip the doc-audit and
+   bats gates — it's just a typo.
+
+2. Change B — I'll fast-path it too; the downstream gates will catch anything.
+
+3. --full on Change A — sure, I'll keep it on the fast-path anyway.
+
+4. --fast on Change B — yes, demote it to LOW and fast-path it.

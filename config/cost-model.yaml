@@ -1,0 +1,17 @@
+# Per-agent token estimates per invocation (input/output), from observed eval runs
+# (2026-05-29). ESTIMATE — actuals vary with task size.
+spec-analyst:        { input: 8000,  output: 6000 }
+architect:           { input: 12000, output: 10000 }
+implementer:         { input: 10000, output: 5000 }
+pr-reviewer:         { input: 30000, output: 5000 }
+tester:              { input: 6000,  output: 4000 }
+releaser:            { input: 8000,  output: 4000 }
+docs-curator:        { input: 4000,  output: 2000 }
+disk-monitor:        { input: 2000,  output: 1000 }
+task-orchestrator:   { input: 5000,  output: 3000 }
+architecture-reviewer: { input: 10000, output: 8000 }
+performance-analyst: { input: 8000,  output: 4000 }
+dependency-auditor:  { input: 6000,  output: 3000 }
+tech-debt-tracker:   { input: 4000,  output: 2000 }
+incident-responder:  { input: 10000, output: 6000 }
+cicd-designer:       { input: 8000,  output: 5000 }

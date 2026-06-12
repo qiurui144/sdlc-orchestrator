@@ -1,0 +1,18 @@
+agent: task-orchestrator
+case: b-routing
+seeds: 3
+# B-wiring behavioral contract (v0.28.0): LOW → fast-path (impl+review) BUT the deterministic net
+# still runs on every path; HIGH → full rigor + panel 5; --full forces full (always wins); --fast is
+# advisory and can NEVER demote a HIGH change. Discriminates against b-routing.bad.out (which skips
+# the net on LOW, fast-paths HIGH, and lets --fast demote).
+assertions:
+  - kind: any_present          # LOW → fast-path (not full ceremony)
+    of: ["fast-path", "fast path", "impl+review", "impl and review", "skip the", "skips the"]
+  - kind: any_present          # the deterministic net STILL runs on the LOW change
+    of: ["still run", "still runs", "every path", "always run", "deterministic", "doc-audit", "net runs"]
+  - kind: any_present          # HIGH → full rigor + panel 5
+    of: ["full rigor", "full spec", "panel size 5", "panel 5", "size 5"]
+  - kind: any_present          # --full forces full rigor on Change A
+    of: ["--full", "force full", "forces full", "full rigor"]
+  - kind: any_present          # --fast cannot demote a HIGH change
+    of: ["advisory", "cannot demote", "can never demote", "never demote", "still runs full", "still full", "not demote"]

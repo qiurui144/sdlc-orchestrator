@@ -1,0 +1,10 @@
+agent: tech-debt-tracker
+case: registry
+seeds: 3
+assertions:
+  - kind: any_present
+    of: ["TODO", "FIXME", "HACK"]
+  - kind: any_present
+    of: [owner, "@alice", "invalid", "format"]
+  - kind: any_present
+    of: [budget, registry, "tech-debt", severity]

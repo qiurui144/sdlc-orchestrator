@@ -1,0 +1,12 @@
+agent: architecture-reviewer
+case: adr
+seeds: 3
+assertions:
+  - kind: all_present                 # structure (grep)
+    of: [Context, Decision, Status, Consequences, Alternatives]
+  - kind: llm_judge                   # quality (judge)
+    rubric: >
+      Do the Consequences describe at least one GENUINE trade-off or downside of
+      adopting clap (e.g. added dependency / binary size / compile time), NOT merely
+      restating the decision or listing only benefits? Quote the specific consequence
+      line you judged. Answer PASS only if a real trade-off/downside is named.

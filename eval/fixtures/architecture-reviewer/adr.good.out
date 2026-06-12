@@ -1,0 +1,14 @@
+# ADR 0001: adopt clap for arg parsing
+## Context
+hello-world hand-rolls std::env::args(); adding --greeting and future flags is fragile.
+## Decision
+Adopt the clap crate for declarative arg parsing.
+## Status
+Proposed.
+## Consequences
+Pro: declarative flags, --help/validation for free. Trade-off: adds a dependency (clap +
+its transitive deps), increases binary size (~300KB) and compile time; the toy is no longer
+dependency-free. Locks us to clap's release cadence.
+## Alternatives
+(1) keep hand-rolled parsing — zero deps but manual --help; (2) lexopt — lighter than clap
+but fewer features. Chose clap for ergonomics despite the dependency cost.

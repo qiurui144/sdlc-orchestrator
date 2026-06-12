@@ -1,0 +1,5 @@
+as_of: 2026-01-01
+tiers:
+  opus:   { input: 10.0, output: 100.0 }
+  sonnet: { input: 2.0,  output: 20.0 }
+  haiku:  { input: 1.0,  output: 10.0 }

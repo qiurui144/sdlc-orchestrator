@@ -1,0 +1,17 @@
+schema_version: 1
+sprint_id: 2026-05-28-test
+phase_from: spec
+phase_to: plan
+artifact_path: tests/fixtures/stable-artifact.md
+artifact_sha: e3a29fffb5b0cc49aff97eb59191d36a5f3b4604
+deliverables_proposed:
+  - agents/foo.md
+risks_to_flag_in_plan: []
+estimated_minor: v0.1.0
+estimated_tokens: 100000
+estimated_duration_hours: 4
+disk_snapshot_before:
+  root_avail_gb: 50
+  data_avail_gb: 200
+  tmp_avail_gb: 10
+timestamp_utc8: 2026-05-28T14:30:00+08:00

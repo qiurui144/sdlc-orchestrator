@@ -1,0 +1,9 @@
+language: generic
+build: 'echo "no build configured for generic stack"; exit 0'
+test_unit: 'bats tests/unit/ 2>/dev/null || echo "no bats unit tests"'
+test_integration: 'bats tests/integration/ 2>/dev/null || echo "no bats integration tests"'
+test_all: 'bats tests/ 2>/dev/null || true'
+lint: 'echo "no lint configured"'
+clean: 'echo "no clean configured"'
+target_size_estimator: |
+  echo 0

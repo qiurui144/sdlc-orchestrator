@@ -1,0 +1,10 @@
+agent: cicd-designer
+case: pipeline
+seeds: 3
+assertions:
+  - kind: all_present
+    of: [build, lint, test]
+  - kind: any_present
+    of: [canary, "blue-green", "blue/green", "feature-flag", "feature flag"]
+  - kind: any_present
+    of: [rollback, runbook]

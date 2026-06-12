@@ -1,0 +1,20 @@
+A3 dispatch decision for this turn:
+
+1. **Dispatch T_a, T_b, T_c in parallel** — they are independent (no shared files, no data
+   dependency), so under SDLC_PARALLEL_DEFAULT=on I fan them out as a batch, capped at
+   SDLC_MAX_PARALLEL=2 (so two run concurrently, the third takes the next freed slot). T_d is
+   NOT dispatched yet — it depends on T_a.
+
+2. **T_a — spot-check, do not full-re-run.** Its handoff carries a well-formed self_score recording
+   shellcheck-clean + bats-green as verified. Per A3b I spot-check (one sample / hash-compare the
+   recorded value) rather than re-running the whole check.
+
+3. **T_b — full re-run.** Its handoff has no self_score block, so there is no spot-check basis →
+   I fully re-run its checks.
+
+4. **T_d — full re-run (no spot-check).** It is risk_tier=HIGH (touches src/auth/session.*), and
+   high-risk changes always get a full re-run, never a spot-check.
+
+5. **The deterministic safety net is NEVER spot-checked — it always runs in full** on every path
+   (doc-audit --strict / ci-status / diff-guard / shellcheck / full bats suite). Spot-check applies
+   only to LLM re-grade of producer-self_scored artifacts, never to the mechanical net.

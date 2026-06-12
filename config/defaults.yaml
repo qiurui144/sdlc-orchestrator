@@ -1,0 +1,10 @@
+# config/defaults.yaml — SDLC orchestrator default knobs (v0.27.0 A3 + v0.28.0 B).
+# Plain KEY: value (read by orchestrator/scripts via env-override > this file > built-in default).
+# These are DEFAULTS; any value may be overridden by an exported env var of the same name.
+
+# --- A3 (v0.27.0): parallel-by-default on already-shipped impl-DAG (v0.10) ---
+SDLC_PARALLEL_DEFAULT: on    # independent impl-DAG tasks fan out by default (was opt-in)
+                             # SDLC_MAX_PARALLEL=1 (shipped escape hatch) restores pure serial = pre-v0.27 behavior
+
+# --- B (v0.28.0): risk-classifier gate ---
+SDLC_RISK_GATE: on           # /sdlc:run consults risk-classify.sh for path depth; SDLC_RISK_GATE=off = always full rigor

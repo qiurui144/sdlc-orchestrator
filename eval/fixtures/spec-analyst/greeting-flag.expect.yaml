@@ -1,0 +1,13 @@
+agent: spec-analyst
+case: greeting-flag
+seeds: 3
+assertions:
+  - kind: all_present
+    of: ["1. 目标", "2. 范围", "3. 架构", "4. 模块", "5. API", "6. 扩展", "7. 错误", "8. 成本", "9. 测试", "10. 向后", "11. 风险"]
+  - kind: all_present
+    of: [happy, edge, error, adversarial, concurrent, resource]
+  - kind: count_at_least
+    pattern: 'R[0-9]+'
+    min: 3
+  - kind: any_present
+    of: ["struct ", "enum ", "interface ", "```rust"]

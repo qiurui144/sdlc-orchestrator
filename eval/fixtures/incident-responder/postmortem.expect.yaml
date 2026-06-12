@@ -1,0 +1,15 @@
+agent: incident-responder
+case: postmortem
+seeds: 3
+assertions:
+  - kind: all_present                 # 7 sections (grep)
+    of: [Summary, Timeline, Impact, "Root cause", Resolution, "Lessons", "Action items"]
+  - kind: any_present                 # action items have owner + deadline (grep)
+    of: ["@", deadline, "due "]
+  - kind: llm_judge                   # 5-Why quality (judge)
+    rubric: >
+      Does the Root cause section perform a 5-Why that reaches a PROCESS / SOP / culture
+      root (e.g. "no alert on index growth", "no capacity review"), NOT merely restate
+      the technical failure ("node OOM-killed" / "memory limit too low")? Quote the
+      deepest 'why'. Answer PASS only if the chain descends past the code/config level
+      to a systemic/process root.

@@ -1,0 +1,7 @@
+schema_version: 99
+sprint_id: 2026-05-28-test
+phase_from: spec
+phase_to: plan
+artifact_path: docs/foo.md
+artifact_sha: abc
+timestamp_utc8: 2026-05-28T14:30:00+08:00

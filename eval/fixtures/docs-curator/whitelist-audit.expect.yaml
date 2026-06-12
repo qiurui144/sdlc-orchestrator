@@ -1,0 +1,15 @@
+agent: docs-curator
+case: whitelist-audit
+seeds: 3
+assertions:
+  # The 3 categories the input actually warrants: README/DEVELOP/INSTALL=KEEP,
+  # release-notes=INLINE, security-report=MOVE. Nothing in this input is
+  # delete-worthy, so DELETE is NOT required — the first real eval run (2026-05-29)
+  # showed agents correctly omit DELETE when no file warrants it; requiring it was
+  # an over-specified assertion (E1), not an agent flaw.
+  - kind: all_present
+    of: [KEEP, MOVE, INLINE]
+  - kind: any_present                 # must flag the release-notes violation
+    of: ["v0.5-release-notes", "release-notes", "RELEASE.md"]
+  - kind: any_present                 # must flag the stray .zh.md
+    of: [".zh.md", "feature.zh"]

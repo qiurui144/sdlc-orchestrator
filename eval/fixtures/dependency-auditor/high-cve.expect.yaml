@@ -1,0 +1,10 @@
+agent: dependency-auditor
+case: high-cve
+seeds: 3
+assertions:
+  - kind: any_present
+    of: [BLOCK, block, blocked]      # High CVE in prod path must block
+  - kind: all_present
+    of: [SBOM, vuln, license, outdated]
+  - kind: any_present
+    of: [lodash, HIGH, High, "prototype pollution"]

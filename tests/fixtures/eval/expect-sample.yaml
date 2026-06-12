@@ -1,0 +1,13 @@
+agent: sample
+case: sample
+seeds: 1
+assertions:
+  - kind: all_present
+    of: ["§1. 目标", "§9. 测试", "§11. 风险"]
+  - kind: all_present
+    of: [happy, edge, error, adversarial, concurrent, resource]
+  - kind: count_at_least
+    pattern: 'R[0-9]+'
+    min: 3
+  - kind: any_present
+    of: ["struct ", "enum ", "interface "]
