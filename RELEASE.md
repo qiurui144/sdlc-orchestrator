@@ -1,5 +1,37 @@
 # Release Notes
 
+## v1.2.0 — cost-measurement (C-1) (2026-06-13)
+
+> Closes M2's "savings unmeasured" gap: routing savings are now a real, honest number. Telemetry-only —
+> no routing-decision change.
+
+### Highlights
+- **`pricing.yaml`** + deepseek/qwen rows; `cost.sh price <provider> <in> <out>` (null when unpriced,
+  never 0).
+- **`call.sh --usage-out`**: records real `usage` tokens to a closed `{in,out,provider,model}` schema —
+  built from parsed integers + literals, never the raw response (a key reflected in `.usage` can't leak);
+  missing usage → null (UNMEASURED, never 0); stdout byte-identical with/without the flag.
+- **Enriched `routing.jsonl`**: each route gains measured token + `ds_usd` (deepseek) + `claude_equiv_usd`
+  (ESTIMATE at the counterfactual claude tier, default haiku). Routing decision byte-unchanged.
+- **`cost.sh --compare`**: `net = claude_saved_estimated − ds_spent_measured − ds_wasted`. A null operand
+  on a route/degrade is UNMEASURED, never a fabricated 0 saving; coverage spans routes+degrades;
+  coverage<0.5 → `non-representative`.
+- **Real measured net (2026-06-13)**: one real route → in 119 / out 241 → deepseek $0.000593 vs
+  claude(haiku) $0.001059 → **net +$0.000466/route** (coverage 1.0).
+
+### Breaking
+- None. `--usage-out` is opt-in; with it absent, `call.sh`/executor behave exactly as v1.1.0.
+
+### Migration
+- None. `/plugin` update picks up v1.2.0; cost telemetry is recorded only when routing is on
+  (`SDLC_MULTI_MODEL=1`).
+
+### Known Limitations
+- The net is **tiny** (cheap mechanical op); the claude side is an **estimate** (haiku, same token count);
+  a degrade burst flips net negative; high `unmeasured` → `non-representative`. The value is that savings
+  are now *measurable*, not the magnitude. The 87%-of-cost lever (judgment-task tier downgrade) is the
+  next step (C-2), which moves the safety boundary and needs its own adversarial gate.
+
 ## v1.1.0 — multi-model routing M2 (eval-gated) (2026-06-13)
 
 > Activates DeepSeek routing for one mechanically-verifiable task type, behind an eval gate. Opt-in

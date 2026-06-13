@@ -8,7 +8,7 @@
 set -uo pipefail
 usage() { echo "usage: call.sh --provider <deepseek|openai|qwen> --messages <file.json> [--model <id>] [--schema <f>] [--max-retries N] [--timeout S] [--stub <f>]" >&2; exit 2; }
 
-provider="" msgs="" model="" schema="" max_retries=3 timeout_s=60 stub="" fmt="json" print_req=""
+provider="" msgs="" model="" schema="" max_retries=3 timeout_s=60 stub="" fmt="json" print_req="" usage_out=""
 [ "$#" -gt 0 ] || usage
 while [ "$#" -gt 0 ]; do case "$1" in
   --provider) provider="$2"; shift 2;;
@@ -19,6 +19,7 @@ while [ "$#" -gt 0 ]; do case "$1" in
   --max-retries) max_retries="$2"; shift 2;;
   --timeout) timeout_s="$2"; shift 2;;
   --stub) stub="$2"; shift 2;;
+  --usage-out) usage_out="$2"; shift 2;;
   --print-request) print_req=1; shift;;
   *) echo "model-provider-unknown-arg: $1" >&2; usage;;
 esac; done
@@ -86,6 +87,24 @@ grounding_ok() {  # non-empty; if --schema given, must parse as object
   if [ -n "$schema" ]; then echo "$1" | jq -e 'type=="object"' >/dev/null 2>&1; else return 0; fi
 }
 
+# write_usage $1=raw-response — C-1 closed-schema usage sink. NEVER echoes the raw response;
+# only the parsed integer token counts + the known provider/model literals (so a key reflected
+# in .usage can't leak, ISO-1). Missing/non-int -> null (UNMEASURED, never 0, HON-1). Best-effort:
+# a write failure is non-fatal — it must not change exit code or stdout (ISO-3).
+write_usage() {
+  [ -n "$usage_out" ] || return 0
+  # ISO-3: an unwritable target is non-fatal AND must not leak a shell redirect error to stderr
+  # (which run() would fold into stdout). Skip silently if the parent dir is absent.
+  case "$usage_out" in */*) [ -d "${usage_out%/*}" ] || return 0 ;; esac
+  local in out injson outjson
+  in="$(printf '%s' "$1"  | jq -r '.usage.prompt_tokens // .usage.input_tokens // "null"' 2>/dev/null)"
+  out="$(printf '%s' "$1" | jq -r '.usage.completion_tokens // .usage.output_tokens // "null"' 2>/dev/null)"
+  case "$in"  in ''|*[!0-9]*) injson=null;;  *) injson="$in";;  esac
+  case "$out" in ''|*[!0-9]*) outjson=null;; *) outjson="$out";; esac
+  jq -nc --argjson in "$injson" --argjson out "$outjson" --arg p "$provider" --arg m "$MODEL" \
+    '{in:$in,out:$out,provider:$p,model:$m}' >> "$usage_out" 2>/dev/null || true
+}
+
 req="$(mktemp)"
 # A4-I1 (adversarial): guard build_request — a jq failure must not leave an empty req that fakes success.
 build_request > "$req" 2>/dev/null || { rm -f "$req"; echo "model-provider-build-failed" >&2; exit 2; }
@@ -96,7 +115,7 @@ while [ "$attempt" -lt "$max_retries" ]; do
   attempt=$((attempt+1))
   raw="$(do_call "$req" 2>/dev/null)" || raw=""
   content="$(echo "$raw" | jq -r '.choices[0].message.content // empty' 2>/dev/null)"
-  if grounding_ok "$content"; then printf '%s\n' "$content"; rm -f "$req"; exit 0; fi
+  if grounding_ok "$content"; then write_usage "$raw"; printf '%s\n' "$content"; rm -f "$req"; exit 0; fi
   echo "$raw" | jq -e '.error' >/dev/null 2>&1 && http_seen=1
   # feed back a REDACTED note for the next attempt; the key can never re-enter prompt/disk (R2/R10)
   fb="$(redact "previous response invalid: $raw")"

@@ -29,6 +29,50 @@ fi
 pricing="${SDLC_PRICING_FILE:-$PLUGIN_ROOT/config/pricing.yaml}"
 model="${SDLC_COST_MODEL_FILE:-$PLUGIN_ROOT/config/cost-model.yaml}"
 
+# price subcommand: `cost.sh price <provider> <in_tok> <out_tok>` -> `usd=<n>|null` (C-1).
+# null (not 0) when the provider has no price — HON-1: a missing price is UNMEASURED, never 0.
+if [ "${1:-}" = "price" ]; then
+  prov="${2:-}"; intok="${3:-0}"; outtok="${4:-0}"
+  if [ -f "$pricing" ]; then
+    pi="$(yq -r ".tiers.\"$prov\".input  // \"null\"" "$pricing" 2>/dev/null)"
+    po="$(yq -r ".tiers.\"$prov\".output // \"null\"" "$pricing" 2>/dev/null)"
+  else pi=null; po=null; fi
+  case "$pi" in ''|null|*[!0-9.]*) echo "usd=null"; exit 0;; esac
+  case "$po" in ''|null|*[!0-9.]*) echo "usd=null"; exit 0;; esac
+  case "$intok$outtok" in *[!0-9]*) echo "usd=null"; exit 0;; esac  # non-integer tokens -> unmeasured
+  awk -v i="$intok" -v o="$outtok" -v pi="$pi" -v po="$po" 'BEGIN{printf "usd=%.6f\n",(i*pi+o*po)/1000000}'
+  exit 0
+fi
+
+# --compare subcommand: aggregate a routing.jsonl into a measured-vs-estimated net (C-1 Task 4).
+# net = saved_est − ds_spent − ds_wasted. A null operand on a route -> that route is UNMEASURED,
+# NEVER counted as 0 saving (HON-1, no `// 0` on the per-route operands). coverage<0.5 -> tagged.
+if [ "${1:-}" = "--compare" ]; then
+  tel="${2:-${SDLC_TELEMETRY_FILE:-runs/routing.jsonl}}"
+  if [ ! -f "$tel" ]; then echo "net_estimated=UNMEASURED (no telemetry at $tel)"; exit 0; fi
+  jq -rs '
+    def n(x): if (x|type)=="number" then x else null end;
+    (map(select(.decision=="route-deepseek-ok")))   as $routes |
+    (map(select(.decision|startswith("degrade-")))) as $degr |
+    # measured route = BOTH operands present; measured degrade = ds_usd present. A null ds_usd on a
+    # degrade is UNMEASURED (B-1: never // 0 — a burned-but-unmeasured degrade must not read as 0 waste).
+    ($routes | map(select(n(.claude_equiv_usd)!=null and n(.ds_usd)!=null))) as $rmeas |
+    ($degr   | map(select(n(.ds_usd)!=null)))        as $dmeas |
+    ($rmeas | map(.claude_equiv_usd) | add // 0) as $saved |
+    ($rmeas | map(.ds_usd)           | add // 0) as $spent |
+    ($dmeas | map(.ds_usd)           | add // 0) as $wasted |
+    (($routes|length)+($degr|length)) as $natt |     # all deepseek attempts (routes + degrades)
+    (($rmeas|length)+($dmeas|length)) as $nm |        # of which measured
+    ($natt-$nm) as $nu |
+    ($saved-$spent-$wasted) as $net |
+    (if $natt>0 then ($nm/$natt) else 0 end) as $cov |
+    "ds_spent_measured=\($spent) claude_saved_estimated=\($saved) net_estimated=\($net) "
+      + "coverage=\($cov) routes=\($routes|length) degrades=\($degr|length) unmeasured=\($nu)"
+      + (if $cov<0.5 then " non-representative" else "" end)
+  ' "$tel"
+  exit 0
+fi
+
 # pricing (fallback if missing)
 pfallback=""
 if [ -f "$pricing" ]; then

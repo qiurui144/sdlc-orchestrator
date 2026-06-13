@@ -26,7 +26,7 @@ CALL="$ROOT/skills/model-provider/call.sh"
 
 die() { echo "executor: $*" >&2; exit 2; }
 
-op="" input="" out="" allowlist="$ROOT/config/model-allowlist.yaml" stub_output="" telemetry=""
+op="" input="" out="" allowlist="$ROOT/config/model-allowlist.yaml" stub_output="" telemetry="" stub_usage=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --task-op) op="$2"; shift 2;;
@@ -34,6 +34,7 @@ while [ "$#" -gt 0 ]; do
     --out) out="$2"; shift 2;;
     --allowlist) allowlist="$2"; shift 2;;
     --stub-output) stub_output="$2"; shift 2;;
+    --stub-usage) stub_usage="$2"; shift 2;;
     --telemetry) telemetry="$2"; shift 2;;
     *) die "unknown arg: $1";;
   esac
@@ -44,16 +45,38 @@ if [ -z "$op" ] || [ -z "$input" ]; then die "usage: --task-op <op> --input <f> 
 # regardless of the allowlist's stored f1 (a forged/poisoned f1 cannot collapse the
 # oracle — G3 C-1). 0.75 = default eval floor 0.85 − the 0.10 online tolerance.
 ONLINE_HARD_FLOOR="${SDLC_ONLINE_HARD_FLOOR:-0.75}"
+COSTSH="$ROOT/skills/cost-estimation/cost.sh"
+
+# C-1 cost-measurement telemetry fields (null = UNMEASURED, never 0, HON-1). Default null;
+# set_telemetry_usd populates them on a real deepseek call. Measurement only — never affects routing.
+tm_in=null tm_out=null tm_ds_usd=null tm_claude_usd=null
 
 emit() {  # emit <decision> <exit>
   local decision="$1" code="$2"
   if [ -n "$telemetry" ]; then
     mkdir -p "$(dirname "$telemetry")"
-    printf '{"op":"%s","decision":"%s","degraded":%s}\n' \
-      "$op" "$decision" "$([ "$code" -eq 0 ] && echo false || echo true)" >> "$telemetry"
+    printf '{"op":"%s","decision":"%s","degraded":%s,"in":%s,"out":%s,"ds_usd":%s,"claude_equiv_usd":%s}\n' \
+      "$op" "$decision" "$([ "$code" -eq 0 ] && echo false || echo true)" \
+      "$tm_in" "$tm_out" "$tm_ds_usd" "$tm_claude_usd" >> "$telemetry"
   fi
   echo "decision=$decision"
   exit "$code"
+}
+
+# set_telemetry_usd $1=usage_file $2=task_type — measured token from the usage sink -> ds_usd
+# (measured deepseek cost) + claude_equiv_usd (ESTIMATE at task_claude_tier, default haiku).
+# Both operands must be present; otherwise leave null (HON-1, never 0). Routing UNCHANGED.
+set_telemetry_usd() {
+  [ -f "$1" ] || return 0
+  tm_in="$(jq -r '.in // "null"'  "$1" 2>/dev/null)";  case "$tm_in"  in ''|null|*[!0-9]*) tm_in=null;;  esac
+  tm_out="$(jq -r '.out // "null"' "$1" 2>/dev/null)"; case "$tm_out" in ''|null|*[!0-9]*) tm_out=null;; esac
+  [ "$tm_in" = null ] && return 0
+  [ "$tm_out" = null ] && return 0
+  local ct; ct="$(yq -r ".task_claude_tier.\"$2\" // \"haiku\"" "$MAP" 2>/dev/null)"
+  tm_ds_usd="$("$COSTSH" price deepseek "$tm_in" "$tm_out" 2>/dev/null | sed 's/usd=//')"
+  tm_claude_usd="$("$COSTSH" price "$ct" "$tm_in" "$tm_out" 2>/dev/null | sed 's/usd=//')"
+  case "$tm_ds_usd"     in ''|usd=*) tm_ds_usd=null;; esac
+  case "$tm_claude_usd" in ''|usd=*) tm_claude_usd=null;; esac
 }
 
 # 0. global opt-in gate (default off -> always claude, zero behavior change). Exits
@@ -113,18 +136,21 @@ record() {  # record <0|1> — append an online-grade outcome, keep the last 20
 
 # 4. call deepseek with the shared build-messages prompt (plain-text mode).
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
-ds_out="$work/out"
+ds_out="$work/out"; usage_file="$work/usage"
 if [ -n "$stub_output" ]; then
   cp "$stub_output" "$ds_out"
+  [ -n "$stub_usage" ] && cp "$stub_usage" "$usage_file"
 else
   # SAME prompt as eval (grader build-messages) + plain-text mode, so the routed deepseek
   # output is drawn from exactly the distribution the allowlist F1 was measured on.
+  # --usage-out captures real token for cost measurement (C-1); routing logic UNCHANGED.
   "$GRADER" build-messages --task "$task_type" --input "$input" > "$work/msgs.json" 2>/dev/null \
-    || emit degrade-claude-call-failed 10
-  if ! "$CALL" --provider deepseek --messages "$work/msgs.json" --format text > "$ds_out" 2>/dev/null; then
-    emit degrade-claude-call-failed 10
+    || { tm_ds_usd=0; emit degrade-claude-call-failed 10; }   # call-failed burned no token -> 0 waste
+  if ! "$CALL" --provider deepseek --messages "$work/msgs.json" --format text --usage-out "$usage_file" > "$ds_out" 2>/dev/null; then
+    tm_ds_usd=0; emit degrade-claude-call-failed 10
   fi
 fi
+set_telemetry_usd "$usage_file" "$task_type"   # measured token -> ds_usd + claude_equiv_usd (haiku)
 
 # 5. ONLINE correctness oracle: re-grade the LIVE output against the input-derived
 #    expected. The acceptance bar = max(stored_f1 - 0.10, ONLINE_HARD_FLOOR) — the

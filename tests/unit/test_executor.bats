@@ -166,3 +166,28 @@ dec() { echo "$output" | sed -n 's/^decision=//p'; }
   [ "$status" -eq 0 ]
   [ "$(jq -r '.window[-1]' "$CIRC/inventory-count-diff.json")" = "0" ]
 }
+
+# --- C-1 Task 3: telemetry enriched with measured token + usd ---
+
+@test "telemetry: route-deepseek-ok enriched with token + ds_usd + claude_equiv_usd (haiku)" {
+  printf '{"in":100,"out":50}' > "$TD/usage"
+  run env SDLC_MULTI_MODEL=1 "$EXEC" --task-op inventory-count --input "$TD/in" --allowlist "$TD/allow.yaml" --stub-output "$TD/correct" --stub-usage "$TD/usage" --out "$TD/result" --telemetry "$TEL"
+  [ "$status" -eq 0 ]; [ "$(dec)" = "route-deepseek-ok" ]
+  grep -q '"in":100' "$TEL"; grep -q '"out":50' "$TEL"
+  grep -qE '"ds_usd":[0-9]' "$TEL"; grep -qE '"claude_equiv_usd":[0-9]' "$TEL"
+  # haiku in 0.8/out 4 per 1M: claude_equiv = (100*0.8+50*4)/1e6 = 0.00028; deepseek (100*.55+50*2.19)/1e6=0.0001645
+  grep -q '"claude_equiv_usd":0.000280' "$TEL"
+}
+
+@test "telemetry: missing usage -> in/out null (NOT 0, HON-1)" {
+  run env SDLC_MULTI_MODEL=1 "$EXEC" --task-op inventory-count --input "$TD/in" --allowlist "$TD/allow.yaml" --stub-output "$TD/correct" --out "$TD/result" --telemetry "$TEL"
+  [ "$status" -eq 0 ]
+  grep -q '"in":null' "$TEL"; grep -q '"ds_usd":null' "$TEL"
+}
+
+@test "telemetry: route-claude-* (not-allowlisted) has null usd (no deepseek call)" {
+  cp "$TD/allow.yaml" "$TD/np.yaml"; yq -i '.tasks."inventory-count-diff".passed = false' "$TD/np.yaml"
+  run env SDLC_MULTI_MODEL=1 "$EXEC" --task-op inventory-count --input "$TD/in" --allowlist "$TD/np.yaml" --stub-output "$TD/correct" --telemetry "$TEL"
+  [ "$(dec)" = "route-claude-not-allowlisted" ]
+  grep -q '"ds_usd":null' "$TEL"; grep -q '"in":null' "$TEL"
+}

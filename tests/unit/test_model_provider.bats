@@ -64,3 +64,49 @@ teardown() { rm -f "$MSGS"; }
   [ "$status" -eq 0 ]
   echo "$output" | jq -e '.response_format.type=="json_object"' >/dev/null
 }
+
+# --- C-1 Task 2: --usage-out closed-schema sink (redacted, stdout-invariant) ---
+
+@test "--usage-out writes closed 4-field schema on success" {
+  S="$(mktemp)"; printf '{"choices":[{"message":{"content":"hi"}}],"usage":{"prompt_tokens":12,"completion_tokens":5}}' > "$S"
+  U="$(mktemp)"
+  run env DEEPSEEK_BASE_URL=http://x DEEPSEEK_MODEL=deepseek-v4-pro DEEPSEEK_API_KEY=sk-test \
+    "$CALL" --provider deepseek --messages "$MSGS" --format text --stub "$S" --usage-out "$U"
+  [ "$status" -eq 0 ]; [ "$output" = "hi" ]
+  jq -e '.in==12 and .out==5 and .provider=="deepseek" and .model=="deepseek-v4-pro"' "$U" >/dev/null
+  rm -f "$S" "$U"
+}
+
+@test "--usage-out missing usage -> in/out null (NOT 0, HON-1)" {
+  S="$(mktemp)"; printf '{"choices":[{"message":{"content":"hi"}}]}' > "$S"; U="$(mktemp)"
+  run env DEEPSEEK_BASE_URL=http://x DEEPSEEK_MODEL=m DEEPSEEK_API_KEY=sk \
+    "$CALL" --provider deepseek --messages "$MSGS" --format text --stub "$S" --usage-out "$U"
+  [ "$status" -eq 0 ]
+  jq -e '.in==null and .out==null' "$U" >/dev/null
+  rm -f "$S" "$U"
+}
+
+@test "--usage-out: a key echoed in .usage does NOT leak into the sink (ISO-1)" {
+  S="$(mktemp)"; printf '{"choices":[{"message":{"content":"hi"}}],"usage":{"prompt_tokens":3,"completion_tokens":1,"note":"sk-fakeLEAKEDnotreal00"}}' > "$S"; U="$(mktemp)"
+  run env DEEPSEEK_BASE_URL=http://x DEEPSEEK_MODEL=m DEEPSEEK_API_KEY=sk \
+    "$CALL" --provider deepseek --messages "$MSGS" --format text --stub "$S" --usage-out "$U"
+  [ "$status" -eq 0 ]
+  ! grep -q 'LEAKED' "$U"
+  rm -f "$S" "$U"
+}
+
+@test "stdout byte-identical with and without --usage-out (ISO-2)" {
+  S="$(mktemp)"; printf '{"choices":[{"message":{"content":"hello\\nworld"}}],"usage":{"prompt_tokens":1,"completion_tokens":1}}' > "$S"; U="$(mktemp)"
+  a="$(env DEEPSEEK_BASE_URL=http://x DEEPSEEK_MODEL=m DEEPSEEK_API_KEY=sk "$CALL" --provider deepseek --messages "$MSGS" --format text --stub "$S")"
+  b="$(env DEEPSEEK_BASE_URL=http://x DEEPSEEK_MODEL=m DEEPSEEK_API_KEY=sk "$CALL" --provider deepseek --messages "$MSGS" --format text --stub "$S" --usage-out "$U")"
+  [ "$a" = "$b" ]
+  rm -f "$S" "$U"
+}
+
+@test "--usage-out unwritable path -> non-fatal, stdout+exit unchanged (ISO-3)" {
+  S="$(mktemp)"; printf '{"choices":[{"message":{"content":"hi"}}],"usage":{"prompt_tokens":1,"completion_tokens":1}}' > "$S"
+  run env DEEPSEEK_BASE_URL=http://x DEEPSEEK_MODEL=m DEEPSEEK_API_KEY=sk \
+    "$CALL" --provider deepseek --messages "$MSGS" --format text --stub "$S" --usage-out /nonexistent-dir/u.json
+  [ "$status" -eq 0 ]; [ "$output" = "hi" ]
+  rm -f "$S"
+}

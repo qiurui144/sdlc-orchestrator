@@ -1,6 +1,6 @@
 {
   "name": "sdlc-orchestrator",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Stack-agnostic SDLC orchestration for Claude Code: 18 agents, 28 skills, 30 slash commands, 3 hooks. Enforces CLAUDE.md global rules across spec → plan → impl → review → test → release plus common SE practices (ADR, threat modeling, performance, dependencies, tech debt, incidents, CI/CD). Parallel orchestration with a Challenger Panel (consensus-auto) lowers human-interaction frequency; a cross-feature merge-queue assigns serial version tags at merge time; background-job tracking enables async dispatch/collect with in-flight visibility; an i18n layer (SDLC_LANG) localizes human-facing output to zh/en/bilingual.",
   "author": { "name": "qiurui144", "email": "happyqiuqiu9604@gmail.com" },
   "license": "MIT",

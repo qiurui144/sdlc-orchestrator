@@ -150,8 +150,10 @@ it is a bug.
 
 ## Version roadmap
 
-> Shipped through **v1.1.0** (2026-06-13): 18 agents, 30 commands, 28 skills, 3 hook entries (5 scripts).
+> Shipped through **v1.2.0** (2026-06-13): 18 agents, 30 commands, 28 skills, 3 hook entries (5 scripts).
 > v1.0.0 GA rolled up ui-vision-judge + web-ui quality gates + multi-model-routing M1 (provider layer, opt-in).
+> **v1.2.0** adds cost-measurement (C-1): real `usage`-token capture + `cost.sh --compare` that prints a
+> measured-vs-estimated routing net (null≠0 honest, coverage-tagged) — closing M2's "savings unmeasured" gap.
 > **v1.1.0** adds multi-model-routing **M2** (eval-gated routing): the `model-eval` skill + a closed
 > task-type map → eval-proven allowlist → online correctness oracle → circuit breaker, so deepseek can
 > auto-handle one mechanically-verifiable task type under `SDLC_MULTI_MODEL=1` (opt-in). See RELEASE.md.

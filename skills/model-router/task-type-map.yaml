@@ -9,3 +9,10 @@
 # Adding an op here is a deliberate, reviewed act (a judgment op must NEVER be added).
 ops:
   inventory-count: inventory-count-diff
+
+# task_claude_tier — the COUNTERFACTUAL claude tier this op would otherwise run on, used by
+# cost measurement (C-1) to estimate claude_equiv_usd. Default haiku (a mechanical op's realistic
+# cheapest claude baseline; defaulting higher would overstate savings, MEAS-F5). Measurement only —
+# does NOT affect routing.
+task_claude_tier:
+  inventory-count-diff: haiku
