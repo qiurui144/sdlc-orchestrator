@@ -1,0 +1,4 @@
+{
+  "input": "hook h1\nhook h2",
+  "golden": "hook=2"
+}

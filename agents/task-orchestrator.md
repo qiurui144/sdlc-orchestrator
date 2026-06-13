@@ -249,6 +249,22 @@ caller treats it as HIGH (full rigor). The risk_tier is recorded in the handoff 
     blocks without attempting the bounded auto-fix it already has — OR auto-commits a test-weakening
     (the diff-guard mechanically prevents the latter).
 
+16. **M2 model-routing executor (opt-in, default off — byte-identical when off).** When
+    `SDLC_MULTI_MODEL=1` AND the current step is a MECHANICAL op present in the closed map
+    `skills/model-router/task-type-map.yaml` (e.g. `inventory-count`), run
+    `skills/model-router/executor.sh --task-op <op> --input <f> --out <f>`.
+    The executor runs in MAIN context via Bash — NEVER inside a dispatched subagent
+    (dispatched subagents lack Bash; the M1/web-ui lesson). Exit 0 → the deepseek output at
+    `--out` has already passed the allowlist + sources_hash gate AND the online correctness
+    oracle; use it. exit 10 → do the normal claude dispatch exactly as before (the
+    `decision=<kebab>` line says why: disabled / no-tasktype / not-allowlisted / stale-hash /
+    breaker-open / degrade). **Judgment ops NEVER consult the executor** — spec / plan / impl /
+    review / threat / release / panel / intake are structurally absent from the closed map, so
+    there is no key to look up; do not "try" them. With `SDLC_MULTI_MODEL` unset the executor is
+    never invoked at all — the drive is byte-identical to pre-M2 behavior. Anti-pattern: invoking
+    executor.sh from inside a subagent prompt; adding a judgment op to the closed map "to test
+    routing"; using a deepseek output that exited non-zero.
+
 ---
 
 ## Cross-feature orchestration (v0.11, drive mode)

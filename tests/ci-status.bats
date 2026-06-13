@@ -518,18 +518,18 @@ dgteardown() { cd "$BATS_TEST_DIRNAME" || return; rm -rf "$TD"; }
   echo "$fm" | grep -qE "^description: .+"
 }
 
-@test "dogfood: plugin.json + README declare 18 agents / 27 skills / 30 commands / 3 hooks" {
+@test "dogfood: plugin.json + README declare 18 agents / 28 skills / 30 commands / 3 hooks" {
   PJ="$BATS_TEST_DIRNAME/../.claude-plugin/plugin.json"
   RM="$BATS_TEST_DIRNAME/../README.md"
-  run awk '/18 agents, 27 skills, 30 slash commands, 3 hooks/{f=1} END{exit f?0:1}' "$PJ"; [ "$status" -eq 0 ]
-  run awk '/18 agents, 27 skills, 30 slash/{f=1} END{exit f?0:1}' "$RM"; [ "$status" -eq 0 ]
+  run awk '/18 agents, 28 skills, 30 slash commands, 3 hooks/{f=1} END{exit f?0:1}' "$PJ"; [ "$status" -eq 0 ]
+  run awk '/18 agents, 28 skills, 30 slash/{f=1} END{exit f?0:1}' "$RM"; [ "$status" -eq 0 ]
 }
 @test "dogfood: declared counts match the real FS counts (no drift)" {
   D="$BATS_TEST_DIRNAME/.."
   a=$(find "$D/agents" -maxdepth 1 -name '*.md' -type f | awk 'END{print NR}')
   s=$(find "$D/skills" -mindepth 2 -maxdepth 2 -name 'SKILL.md' -type f | awk 'END{print NR}')
   c=$(find "$D/commands" -maxdepth 1 -name '*.md' -type f | awk 'END{print NR}')
-  [ "$a" -eq 18 ]; [ "$s" -eq 27 ]; [ "$c" -eq 30 ]
+  [ "$a" -eq 18 ]; [ "$s" -eq 28 ]; [ "$c" -eq 30 ]
 }
 
 @test "META coupling: releaser + pr-reviewer + promote reference ci-status.sh; remediator references diff-guard.sh" {

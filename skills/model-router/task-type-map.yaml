@@ -1,0 +1,11 @@
+# task-type-map.yaml — CLOSED deterministic map: SDLC-op -> task_type (spec §4, G1 C-2).
+#
+# ONLY mechanical, live-gradable ops appear here. Judgment ops (spec / plan / impl /
+# review / threat / release / panel / ...) are ABSENT — so they can never produce an
+# allowlist-lookup key and can never be routed to deepseek, REGARDLESS of what a
+# (possibly forged) allowlist says. This is the structural enforcement of
+# "judgment is never externalized" — not an LLM-assigned label.
+#
+# Adding an op here is a deliberate, reviewed act (a judgment op must NEVER be added).
+ops:
+  inventory-count: inventory-count-diff

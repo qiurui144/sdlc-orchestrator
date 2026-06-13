@@ -1,0 +1,4 @@
+{
+  "input": "agent a\nagent b\nskill x",
+  "golden": "agent=2\nskill=1"
+}

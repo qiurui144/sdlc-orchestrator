@@ -8,18 +8,21 @@
 set -uo pipefail
 usage() { echo "usage: call.sh --provider <deepseek|openai|qwen> --messages <file.json> [--model <id>] [--schema <f>] [--max-retries N] [--timeout S] [--stub <f>]" >&2; exit 2; }
 
-provider="" msgs="" model="" schema="" max_retries=3 timeout_s=60 stub=""
+provider="" msgs="" model="" schema="" max_retries=3 timeout_s=60 stub="" fmt="json" print_req=""
 [ "$#" -gt 0 ] || usage
 while [ "$#" -gt 0 ]; do case "$1" in
   --provider) provider="$2"; shift 2;;
   --messages) msgs="$2"; shift 2;;
   --model) model="$2"; shift 2;;
   --schema) schema="$2"; shift 2;;
+  --format) fmt="$2"; shift 2;;
   --max-retries) max_retries="$2"; shift 2;;
   --timeout) timeout_s="$2"; shift 2;;
   --stub) stub="$2"; shift 2;;
+  --print-request) print_req=1; shift;;
   *) echo "model-provider-unknown-arg: $1" >&2; usage;;
 esac; done
+case "$fmt" in json|text) ;; *) echo "model-provider-bad-format: $fmt (json|text)" >&2; usage;; esac
 case "$max_retries" in ''|*[!0-9]*) max_retries=3;; esac
 case "$timeout_s" in ''|*[!0-9]*) timeout_s=60;; esac
 [ -n "$provider" ] || usage
@@ -60,6 +63,12 @@ run_dir="${SDLC_RUN_ROOT:-reports/runs}/$(date +%Y%m%dT%H%M%S)_$$_model-provider
 
 # build OpenAI-compat request from the messages file (+ optional json_schema response_format)
 build_request() {
+  # text mode: grader-exact tasks return plain text, NOT JSON -> omit response_format
+  # entirely (forcing json_object would make deepseek reject a non-"json" prompt).
+  if [ "$fmt" = text ]; then
+    jq -n --arg model "$MODEL" --slurpfile m "$msgs" '{model:$model, messages:$m[0]}'
+    return 0
+  fi
   local rf
   if [ -n "$schema" ] && [ -f "$schema" ]; then rf="$(jq -nc --slurpfile s "$schema" '{type:"json_schema", json_schema:$s[0]}')"
   else rf='{"type":"json_object"}'; fi
@@ -81,6 +90,7 @@ req="$(mktemp)"
 # A4-I1 (adversarial): guard build_request — a jq failure must not leave an empty req that fakes success.
 build_request > "$req" 2>/dev/null || { rm -f "$req"; echo "model-provider-build-failed" >&2; exit 2; }
 [ -s "$req" ] || { rm -f "$req"; echo "model-provider-build-empty" >&2; exit 2; }
+[ -n "$print_req" ] && { cat "$req"; rm -f "$req"; exit 0; }  # introspection: emit the request, no network
 attempt=0; http_seen=0
 while [ "$attempt" -lt "$max_retries" ]; do
   attempt=$((attempt+1))

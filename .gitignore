@@ -3,6 +3,7 @@
 reports/runs/
 reports/*.md
 eval/runs/
+runs/
 
 # build artifacts
 target/

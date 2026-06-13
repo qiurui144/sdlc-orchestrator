@@ -1,0 +1,4 @@
+{
+  "input": "command c1\ncommand c2\nskill s1\nagent a1\nagent a2\nagent a3",
+  "golden": "agent=3\ncommand=2\nskill=1"
+}

@@ -47,3 +47,20 @@ teardown() { rm -f "$MSGS"; }
   ! ( printf '%s' "$output"; cat "$BATS_TEST_TMPDIR/runs"/*/feedback.log 2>/dev/null ) | grep -qF "$K"
   rm -f "$S"
 }
+
+# --- --format text: plain-text mode for grader-exact tasks (Task 4 real path) ---
+
+@test "--format text omits response_format (text tasks are not JSON)" {
+  run env DEEPSEEK_BASE_URL=http://x DEEPSEEK_MODEL=deepseek-v4-pro DEEPSEEK_API_KEY=sk-test \
+    "$CALL" --provider deepseek --messages "$MSGS" --format text --print-request
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e 'has("response_format")|not' >/dev/null
+  echo "$output" | jq -e '.model=="deepseek-v4-pro" and (.messages|length>=1)' >/dev/null
+}
+
+@test "default format keeps response_format json_object (back-compat)" {
+  run env DEEPSEEK_BASE_URL=http://x DEEPSEEK_MODEL=deepseek-v4-pro DEEPSEEK_API_KEY=sk-test \
+    "$CALL" --provider deepseek --messages "$MSGS" --print-request
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e '.response_format.type=="json_object"' >/dev/null
+}

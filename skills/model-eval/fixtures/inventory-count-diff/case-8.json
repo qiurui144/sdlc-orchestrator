@@ -1,0 +1,4 @@
+{
+  "input": "skill a\nskill a\nskill b",
+  "golden": "skill=3"
+}

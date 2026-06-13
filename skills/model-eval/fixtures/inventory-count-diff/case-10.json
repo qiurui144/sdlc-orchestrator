@@ -1,0 +1,4 @@
+{
+  "input": "lens l1\nlens l2\nlens l3\ntemplate t1",
+  "golden": "lens=3\ntemplate=1"
+}

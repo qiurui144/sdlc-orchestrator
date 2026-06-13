@@ -1,0 +1,51 @@
+# grader-modes.yaml — per-task-type scoring config for the eval-gated-routing (M2) gate.
+# The SAME grader.sh is used offline (eval, --golden) and online (executor oracle, --derive),
+# so a task is only routable if its output is deterministically gradable.
+#
+# fields:
+#   mode:         exact | normalized | set-f1   (how grader.sh scores output vs expected)
+#   live_gradable: true if the expected answer is RE-DERIVABLE from the input alone (eligible
+#                  for online routing); false → eval-only, never routed.
+#   prompt_file:  the agent .md whose content is hashed into sources_hash (eval+executor must
+#                 hash the SAME file, or the staleness check is meaningless).
+#   derive_cmd:   (live_gradable only) a command that, given the input file as $1, prints the
+#                 expected output — used by `grader.sh --derive`. No stored golden needed at runtime.
+
+# --- synthetic self-validation tasks (Task 1: prove the scorer; not routed) ---
+exact-demo:
+  mode: exact
+  live_gradable: false
+  prompt_file: agents/docs-curator.md
+normalized-demo:
+  mode: normalized
+  live_gradable: false
+  prompt_file: agents/docs-curator.md
+setf1-demo:
+  mode: set-f1
+  live_gradable: false
+  prompt_file: agents/docs-curator.md
+
+# --- real mechanical task (Task 2): per-category counts, fully derivable from input ---
+inventory-count-diff:
+  mode: exact
+  live_gradable: true
+  prompt_file: agents/docs-curator.md
+  derive_cmd: |
+    awk '{c[$1]++} END{for(k in c) print k"="c[k]}' "$1" | sort
+  # eval_system + eval_fewshot: the EXACT task prompt used at BOTH eval time (eval.sh) and
+  # routing time (executor.sh) via `grader.sh build-messages`. Identical prompts are required
+  # or the eval F1 would not represent the routed behavior; both live inside grader-modes.yaml,
+  # already bound into sources_hash, so a prompt change invalidates a stale allowlist.
+  eval_system: |
+    You convert an inventory listing into per-prefix counts. Count how many lines start with
+    each distinct first whitespace-delimited word. Output EXACTLY one line per distinct
+    first-word, formatted key=count with NO spaces around '=', sorted ascending alphabetically
+    by key. Output ONLY those lines: no prose, no markdown, no code fences, no blank lines.
+  eval_fewshot:
+    input: |
+      agent a
+      skill b
+      skill c
+    output: |
+      agent=1
+      skill=2

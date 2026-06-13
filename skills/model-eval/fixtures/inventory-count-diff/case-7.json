@@ -1,0 +1,4 @@
+{
+  "input": "agent x\nskill y\ncommand z\nhook w",
+  "golden": "agent=1\ncommand=1\nhook=1\nskill=1"
+}

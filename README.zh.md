@@ -4,7 +4,7 @@
 
 ![ci](https://github.com/qiurui144/sdlc-orchestrator/actions/workflows/ci.yml/badge.svg)
 
-面向 Claude Code 的、与技术栈无关的 SDLC 编排插件:**18 个 agent、27 个 skill、30 个斜杠命令、
+面向 Claude Code 的、与技术栈无关的 SDLC 编排插件:**18 个 agent、28 个 skill、30 个斜杠命令、
 3 个 hook**。驱动 `spec → plan → impl → review → test → release` 全链,外加常见软件工程实践
 (ADR、威胁建模、性能、依赖、技术债、事故、CI/CD),并把项目 CLAUDE.md 的规则**以结构强制**落地。
 

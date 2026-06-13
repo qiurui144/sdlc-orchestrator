@@ -1,0 +1,4 @@
+{
+  "input": "skill solo",
+  "golden": "skill=1"
+}

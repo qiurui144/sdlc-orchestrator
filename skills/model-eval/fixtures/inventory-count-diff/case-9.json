@@ -1,0 +1,4 @@
+{
+  "input": "agent m\ncommand n\ncommand n\ncommand o",
+  "golden": "agent=1\ncommand=3"
+}

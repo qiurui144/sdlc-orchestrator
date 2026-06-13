@@ -1,0 +1,10 @@
+version: 1
+tasks:
+  inventory-count-diff:
+    provider: deepseek
+    f1: 1.0000
+    claude_f1: 1.0000
+    passed: true
+    task_reliability: ok
+    live_gradable: true
+    sources_hash: 5727b77813116b5cf42ca38b577095f31e6ee33db4223e907ed6b04516f92d5b

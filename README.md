@@ -4,7 +4,7 @@
 
 ![ci](https://github.com/qiurui144/sdlc-orchestrator/actions/workflows/ci.yml/badge.svg)
 
-Stack-agnostic SDLC orchestration plugin for Claude Code: **18 agents, 27 skills, 30 slash
+Stack-agnostic SDLC orchestration plugin for Claude Code: **18 agents, 28 skills, 30 slash
 commands, 3 hooks**. Drives `spec → plan → impl → review → test → release` plus common
 software-engineering practices (ADR, threat modeling, performance, dependencies, tech debt,
 incidents, CI/CD), enforcing the project's CLAUDE.md rules by construction.

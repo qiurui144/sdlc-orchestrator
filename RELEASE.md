@@ -1,5 +1,35 @@
 # Release Notes
 
+## v1.1.0 — multi-model routing M2 (eval-gated) (2026-06-13)
+
+> Activates DeepSeek routing for one mechanically-verifiable task type, behind an eval gate. Opt-in
+> (`SDLC_MULTI_MODEL=1`); default behavior is unchanged (all-Claude).
+
+### Highlights
+- **`model-eval` skill** (28 skills total): a deterministic grader (exact / normalized / set-F1) +
+  `eval.sh` worst-case gate (every seed ≥ floor · std ≤ 0.05 · |provider−claude| ≤ 0.10 · claude ≥ floor)
+  → an allowlist bound by `sources_hash` (fixtures + grader + prompt).
+- **Eval-gated routing**: a *closed* task-type map (judgment ops — spec/plan/review/… — are
+  structurally absent, never externalizable) → allowlist → **online correctness oracle** (re-grades the
+  live output, hard floor `max(stored_f1−0.10, 0.75)`) → **circuit breaker** (rolling-20 fail-rate).
+  Any failure degrades to Claude; a weak-model output never reaches the main line unverified.
+- **Real eval done**: on the shipped task type (`inventory-count-diff`) deepseek-v4-pro / qwen-plus /
+  claude all scored F1 1.00 (60 real calls, 3 seeds) → `passed: true`; the executor routes end-to-end to
+  real DeepSeek with the oracle gating.
+
+### Breaking
+- None. Opt-in; with `SDLC_MULTI_MODEL` unset the drive is byte-identical to v1.0.0.
+
+### Migration
+- None required. `/plugin` update picks up v1.1.0; routing stays off until you set `SDLC_MULTI_MODEL=1`
+  and an eval produces a `passed: true` allowlist.
+
+### Known Limitations
+- Single allowlisted task type; F1 1.00 reflects task triviality, not model parity on hard tasks.
+- Net token savings are small and not precisely quantified (the provider caller does not surface
+  `usage`, and the Claude baseline is the harness, not an API call). The value is the mechanism +
+  safety gates, not a large cost reduction. Broader/discriminating task types are future work.
+
 ## v1.0.0 — GA: Personal edition (2026-06-12)
 
 > **General Availability.** Rolls up the full feature set behind the RC 4 gates (§7.2) + real deployment

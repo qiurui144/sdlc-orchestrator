@@ -28,6 +28,26 @@ pure mechanical grader `eval/grade.sh` (which NEVER reads the agent's self-repor
 Real LLM calls: ~(agents × cases × 3 seeds). `all` ≈ 200K tokens. This is the only
 paid path; `grade.sh` and `--dry-run` are free. Confirm with the user before `all`.
 
+## Model-routing eval (M2): `/sdlc:eval --model-task <task_type>`
+
+The second eval mode proves a weak provider on a mechanical, live-gradable task and
+produces the routing allowlist consumed by `skills/model-router/executor.sh`:
+
+1. Pre-flight (free): `bats tests/grader/` must be green — the grader is the gate's
+   judge and must be proven first (spec EVAL C-1). A red grader suite ABORTS the eval.
+2. Print the cost estimate (providers × seeds × cases real-LLM calls) and **wait for
+   explicit user approval** — this is the only paid path (§1.3/§8). Keys come from
+   env / `/tmp/secrets-*`, never from files in the repo.
+3. Dispatch `skills/model-eval/eval.sh --task <task_type> --providers
+   deepseek,claude,qwen --seeds 3 --out config/model-allowlist.yaml` (worst-case
+   gate: every seed ≥ floor, std ≤ 0.05, |provider−claude| ≤ 0.10, claude ≥ floor).
+4. Record the F1 matrix (mean±std per provider) to `reports/<date>_m2-eval.md`.
+   The allowlist carries `sources_hash`; any later fixture/grader/prompt change
+   invalidates it (the executor degrades to claude until re-eval).
+
+`--stub <dir>` runs the same pipeline on canned outputs (free, CI-safe; never
+produces a production allowlist).
+
 ## Refuses / limits
 
 - Agent without a fixture → `eval-no-fixture`, skipped + noted in report.
