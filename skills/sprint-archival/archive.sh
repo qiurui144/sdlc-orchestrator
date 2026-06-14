@@ -26,8 +26,21 @@ plan_file="docs/superpowers/plans/${sprint}.md"
 handoff_glob="docs/superpowers/handoffs/${sprint}-*.yaml"
 test_report="reports/${sprint}-test.md"
 
+# Determine whether the plan was self-built by the orchestrator or adopted from superpowers.
+# plan_self_built defaults to true (backward compat: pre-v0.33 state.json has no such field).
+plan_self_built=true
+state_file=".sdlc/state.json"
+if [ -f "$state_file" ] && command -v jq >/dev/null 2>&1; then
+  val="$(jq -r 'if .plan_self_built == false then "false" else "true" end' "$state_file" 2>/dev/null || echo "true")"
+  [ "$val" = "false" ] && plan_self_built=false
+fi
+
 actions=()
-[ -f "$plan_file" ] && actions+=("delete:$plan_file")
+if [ "$plan_self_built" = "true" ]; then
+  [ -f "$plan_file" ] && actions+=("delete:$plan_file")
+else
+  [ -f "$plan_file" ] && actions+=("skip-adopted-plan:$plan_file")
+fi
 for h in $handoff_glob; do
   [ -f "$h" ] && actions+=("inline-then-delete:$h")
 done
@@ -67,7 +80,11 @@ for h in $handoff_glob; do
   rm "$h"
 done
 
-[ -f "$plan_file" ] && rm "$plan_file"
+if [ "$plan_self_built" = "true" ]; then
+  [ -f "$plan_file" ] && rm "$plan_file"
+else
+  echo "Note: plan file $plan_file was adopted (not self-built); preserved." >> "$release"
+fi
 [ -f "$test_report" ] && echo "Test report: \`$test_report\`" >> "$release"
 
 echo "Sprint $sprint archived. Review RELEASE.md and commit."

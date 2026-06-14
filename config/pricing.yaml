@@ -6,7 +6,12 @@ tiers:
   opus:   { input: 15.0, output: 75.0 }
   sonnet: { input: 3.0,  output: 15.0 }
   haiku:  { input: 0.8,  output:  4.0 }
-  # Non-Claude providers for multi-model routing cost measurement (C-1). ESTIMATE — verify
-  # at platform.deepseek.com / dashscope pricing; rates change. Used by cost.sh --compare.
-  deepseek: { input: 0.55, output: 2.19 }
-  qwen:     { input: 0.4,  output: 1.2 }
+  # Non-Claude providers for multi-model routing cost measurement (C-1).
+  # Source: platform.deepseek.com pricing (verified 2026-06-13, cache-miss rates).
+  # Used by cost.sh --compare. Rates change; re-verify before billing projections.
+  # deepseek-chat alias maps to default deepseek model (historical v3-era alias).
+  deepseek:          { input: 0.435, output: 0.87 }
+  deepseek-v4-pro:   { input: 0.435, output: 0.87 }
+  deepseek-v4-flash: { input: 0.14,  output: 0.28 }
+  qwen:              { input: 0.4,   output: 1.2  }
+  qwen-plus:         { input: 0.4,   output: 1.2  }

@@ -1,0 +1,15 @@
+# commit-msg-draft injected-defect library (C-2).
+# Eval: 2026-06-13, input=idempotency key diff, deepseek-v4-pro draft, gpt-5.5 judge.
+# gpt-5.5 SCORE=0.90. Defect below identified independently by gpt-5.5.
+task_type: commit-msg-draft
+defects:
+  - id: body-describes-what-not-why
+    task_type: commit-msg-draft
+    defect_type: convention-violation
+    planted_patch: >
+      Write the commit body as a description of WHAT was changed ("Added Redis lookup",
+      "Changed the check to validate the header") rather than explaining WHY the change
+      was made (the business motivation: clients were duplicating charges on retry).
+    detect_marker: "flags-body-what-not-why"
+    source: cross-provider  # gpt-5.5 independently identified: body includes what details
+                             # 2026-06-13 eval: gpt-5.5 SCORE=0.90, defect confirmed legitimate

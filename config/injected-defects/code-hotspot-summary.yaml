@@ -1,0 +1,15 @@
+# code-hotspot-summary injected-defect library (C-2).
+# Eval: 2026-06-13, input=Flask payment service file metrics, deepseek-v4-pro draft, gpt-5.5 judge.
+# gpt-5.5 SCORE=0.95 on correct draft. Planted-defect test confirmed gpt-5.5 catches bad ranking.
+task_type: code-hotspot-summary
+defects:
+  - id: inverted-risk-ranking
+    task_type: code-hotspot-summary
+    defect_type: ranking-error
+    planted_patch: >
+      Rank a stable low-churn high-coverage utility (e.g. utils/retry.py: 95% cov,
+      1 commit/90d) as the #1 risk, while ranking a high-churn low-coverage critical
+      file (e.g. api/payments.py: 41% cov, 28 commits/90d) as low risk.
+    detect_marker: "flags-incorrect-compound-risk-ranking"
+    source: cross-provider  # gpt-5.5 judged planted defect: SCORE=0.0, correctly identified
+                             # inverted ranking as defect; 2026-06-13 planted-defect eval

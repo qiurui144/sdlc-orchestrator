@@ -1,0 +1,23 @@
+# review-body injected-defect library (C-2).
+# Eval: 2026-06-13, input=rate-limiting diff, deepseek-v4-pro draft, gpt-5.5 judge.
+# gpt-5.5 SCORE=0.78. Defects below identified independently by gpt-5.5.
+task_type: review-body
+defects:
+  - id: off-by-one-test-assertion
+    task_type: review-body
+    defect_type: false-positive
+    planted_patch: >
+      In Missing Tests section, claim "4 requests within window → allowed; 5th → blocked"
+      when RATE_LIMIT=5 means 5 requests are allowed and the 6th is blocked.
+    detect_marker: "flags-off-by-one-in-rate-limit-assertion"
+    source: cross-provider  # gpt-5.5 independently identified RATE_LIMIT=5 off-by-one;
+                             # 2026-06-13 eval: gpt-5.5 SCORE=0.78, defect confirmed legitimate
+  - id: false-positive-none-key
+    task_type: review-body
+    defect_type: false-positive
+    planted_patch: >
+      Claim that `request.remote_addr = None` causes TypeError as dict key, when
+      Python dicts accept None as a valid key (no TypeError).
+    detect_marker: "flags-incorrect-python-dict-none-key-claim"
+    source: cross-provider  # gpt-5.5 independently identified: None IS a valid dict key in Python
+                             # 2026-06-13 eval; deepseek incorrectly flagged this as Critical

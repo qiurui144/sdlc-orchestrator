@@ -150,13 +150,13 @@ it is a bug.
 
 ## Version roadmap
 
-> Shipped through **v1.2.0** (2026-06-13): 18 agents, 30 commands, 28 skills, 3 hook entries (5 scripts).
+> Shipped through **v1.8.0** (2026-06-14): 18 agents, 30 commands, 28 skills, 3 hook entries (5 scripts).
 > v1.0.0 GA rolled up ui-vision-judge + web-ui quality gates + multi-model-routing M1 (provider layer, opt-in).
-> **v1.2.0** adds cost-measurement (C-1): real `usage`-token capture + `cost.sh --compare` that prints a
-> measured-vs-estimated routing net (null≠0 honest, coverage-tagged) — closing M2's "savings unmeasured" gap.
-> **v1.1.0** adds multi-model-routing **M2** (eval-gated routing): the `model-eval` skill + a closed
-> task-type map → eval-proven allowlist → online correctness oracle → circuit breaker, so deepseek can
-> auto-handle one mechanically-verifiable task type under `SDLC_MULTI_MODEL=1` (opt-in). See RELEASE.md.
+> **v1.1.0** adds M2 eval-gated routing (deepseek on mechanically-verifiable ops under `SDLC_MULTI_MODEL=1`).
+> **v1.2.0** adds cost-measurement (C-1): real `usage`-token capture + `cost.sh --compare`.
+> **v1.3.0–v1.8.0** adds C-2 draft-verify: deepseek/qwen draft draftable judgment ops (7 op types live),
+> claude adversarially verifies. 4 ops route to qwen-plus (18.7× cheaper), 3 to deepseek (reasoning
+> advantage). Routing backed by N=3 multi-seed gpt-5.5 cross-judge eval. See RELEASE.md.
 > `/sdlc:run` full-chain DRIVE; `/sdlc:intake` inspection; SE1–SE23 risk register; concurrency foundation +
 > Challenger Panel (v0.9) + impl-DAG worktree-per-task (v0.10) + cross-feature merge-queue (v0.11)
 > + background-job registry / async dispatch (v0.12) + i18n SDLC_LANG layer (v0.13) + handoff

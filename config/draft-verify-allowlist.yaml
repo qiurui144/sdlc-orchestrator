@@ -1,0 +1,68 @@
+version: 1
+# preferred_provider: qwen | deepseek (default deepseek if absent).
+# If qwen unconfigured (QWEN_API_KEY unset), draft-verify falls back to deepseek automatically.
+# judge_confidence: multi-seed mean (N=3, gpt-5.5 cross-judge, 2026-06-14 eval).
+ops:
+  spec-scope:
+    passed: true
+    task_type: spec-scope
+    judge_confidence: 0.79
+    human_checked: true
+    net_savings: 348
+    tco_ok: true
+    preferred_provider: qwen
+    eval_seeds: 3
+  plan-decomp:
+    passed: true
+    task_type: plan-decomp
+    judge_confidence: 0.81
+    human_checked: true
+    net_savings: 248167
+    tco_ok: true
+    preferred_provider: deepseek
+    eval_seeds: 3
+  review-body:
+    passed: true
+    task_type: review-body
+    judge_confidence: 0.80
+    human_checked: true
+    net_savings: 24037
+    tco_ok: true
+    preferred_provider: deepseek
+    eval_seeds: 3
+  threat-draft:
+    passed: true
+    task_type: threat-draft
+    judge_confidence: 0.87
+    human_checked: true
+    net_savings: 23488
+    tco_ok: true
+    preferred_provider: qwen
+    eval_seeds: 3
+  adr-draft:
+    passed: true
+    task_type: adr-draft
+    judge_confidence: 0.81
+    human_checked: true
+    net_savings: 35275
+    tco_ok: true
+    preferred_provider: deepseek
+    eval_seeds: 3
+  code-hotspot-summary:
+    passed: true
+    task_type: code-hotspot-summary
+    judge_confidence: 0.85
+    human_checked: true
+    net_savings: 12369
+    tco_ok: true
+    preferred_provider: qwen
+    eval_seeds: 3
+  commit-msg-draft:
+    passed: true
+    task_type: commit-msg-draft
+    judge_confidence: 0.87
+    human_checked: true
+    net_savings: 2961
+    tco_ok: true
+    preferred_provider: qwen
+    eval_seeds: 3

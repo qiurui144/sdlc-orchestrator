@@ -17,10 +17,10 @@ teardown() { rm -rf "$TD"; }
 }
 
 @test "cost.sh price <provider> <in> <out> -> usd (deepseek 1M+1M)" {
-  # deepseek 0.55 in / 2.19 out per 1M -> 1M in + 1M out = 2.74
+  # deepseek 0.435 in / 0.87 out per 1M -> 1M in + 1M out = 1.305 (verified 2026-06-13)
   run bash "$COST" price deepseek 1000000 1000000
   [ "$status" -eq 0 ]
-  echo "$output" | grep -qE 'usd=2\.74'
+  echo "$output" | grep -qE 'usd=1\.30'
 }
 
 @test "cost.sh price unknown provider -> usd=null (NOT 0, HON-1)" {

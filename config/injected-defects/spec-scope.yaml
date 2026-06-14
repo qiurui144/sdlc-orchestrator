@@ -1,0 +1,22 @@
+# spec-scope injected-defect library (C-2 §6a).
+# Updated 2026-06-13 (Task 6 real eval): added cross-provider entry from qwen independent review.
+# qwen found 5 scope defects in a real deepseek draft (structured-logging feature); all 5 verified
+# as legitimate. Entry below uses the clearest and most reproducible defect: overclaim-log-schema.
+# Source = cross-provider (qwen found it, not claude) — circular-blind-spot guard now PASSES.
+task_type: spec-scope
+defects:
+  - id: scope-drop-out-of-scope
+    task_type: spec-scope
+    defect_type: omission
+    planted_patch: "delete the 'out of scope / deferred' bullets, leaving only in-scope"
+    detect_marker: "flags-missing-out-of-scope-section"
+    source: prod-caught   # synthetic seed (claude-authored); kept as second entry for coverage
+  - id: overclaim-log-schema
+    task_type: spec-scope
+    defect_type: overclaim
+    planted_patch: >
+      Add to in-scope: 'The implementation will define and enforce a formal JSON Schema for all
+      log entries, including schema versioning, validation rules, and enforcement at log-call sites.'
+    detect_marker: "flags-overclaim-formal-schema"
+    source: cross-provider   # qwen independently identified; deepseek draft included this overclaim;
+                              # 2026-06-13 real eval: qwen found 5/5 legitimate defects in deepseek draft

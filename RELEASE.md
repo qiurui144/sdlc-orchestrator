@@ -1,5 +1,153 @@
 # Release Notes
 
+## v1.8.0 — C-2 per-op provider routing: qwen-plus for 4 ops, N=3 multi-seed eval (2026-06-14)
+
+### Highlights
+
+- **Per-op `preferred_provider` routing in `draft-verify-allowlist.yaml`**: 4 ops now route to
+  qwen-plus (DashScope), 3 stay on deepseek-v4-pro, based on N=3 multi-seed gpt-5.5 cross-judge evaluation.
+- **qwen-plus is 18.7× cheaper and 57× faster** than deepseek-v4-pro for simple/structured tasks.
+  deepseek retains advantage for complex reasoning (plan-decomp, review-body, adr-draft).
+- **Multi-seed evidence (N=3)**: single-seed scores from v1.6.0/v1.7.0 were biased (judge prompt
+  truncated at 2000 chars) for long-output ops. Fixed to 8000 chars; N=3 gives mean±std.
+- **Surprise finding**: `threat-draft` routes to qwen (0.87±0.03 vs deepseek 0.82±0.10).
+- **Automatic fallback**: if `QWEN_API_KEY` unset (exit 6), `draft-verify.sh` falls back to
+  deepseek transparently — zero-downgrade deployment.
+- **6 new bats tests** covering: qwen routing, deepseek explicit, absent-defaults-to-deepseek,
+  allowlist yq readability for all 7 ops, 4+3 provider count invariant.
+
+### Routing table (N=3, gpt-5.5 judge):
+
+| op | provider | score (mean±std) | rationale |
+|----|---------|-----------------|-----------|
+| `spec-scope` | **qwen** | 0.79±0.02 | tie quality, 57× faster |
+| `plan-decomp` | deepseek | 0.81±0.02 | reasoning advantage vs qwen 0.76±0.02 |
+| `review-body` | deepseek | 0.80±0.07 | qwen s0=0.63, borderline |
+| `threat-draft` | **qwen** | 0.87±0.03 | qwen better quality + lower variance |
+| `adr-draft` | deepseek | 0.81±0.05 | qwen s1=0.68 below gate |
+| `code-hotspot-summary` | **qwen** | 0.85±0.07 | cheaper, comparable quality |
+| `commit-msg-draft` | **qwen** | 0.87±0.02 | much cheaper, comparable quality |
+
+### Breaking changes
+
+None. `preferred_provider` absent defaults to `deepseek` (backward compatible).
+
+### Migration
+
+Optionally set `QWEN_API_KEY` (DashScope) to enable qwen routing for 4 ops.
+If unset, all 7 ops continue routing to deepseek automatically.
+
+### Known Limitations
+
+- `postmortem-draft` remains NOT routable (score 0.66 < 0.70 floor).
+- qwen variance on `adr-draft` is 0.07 — occasionally drops to 0.68; deepseek more consistent.
+
+---
+
+## v1.7.0 — C-2 allowlist expansion: adr-draft + code-hotspot-summary + commit-msg-draft (2026-06-13)
+
+### Highlights
+
+- **3 more ops added to C-2 draft-verify allowlist** (gpt-5.5 judge via cc-proxy):
+  - `adr-draft` (architect/opus tier) — judge_confidence=0.85, net_savings=35,275 µUSD/call
+  - `code-hotspot-summary` (codebase-reviewer/sonnet tier) — judge_confidence=0.95, net_savings=12,369 µUSD/call
+  - `commit-msg-draft` (implementer/sonnet tier) — judge_confidence=0.90, net_savings=2,961 µUSD/call
+- **postmortem-draft explicitly REJECTED** (Gate 1 fail: 0.66 < 0.70 floor).
+- **Total: 7 routable op types** across haiku/sonnet/opus tiers.
+
+### Aggregate cost model (7 ops, per sprint):
+
+| Op | Freq/sprint | Claude cost | DeepSeek cost | Net savings |
+|----|------------|------------|--------------|-------------|
+| spec-scope | ~1 | $0.0047 | $0.0011 | ~$0.004 |
+| adr-draft | ~1 | $0.036 | $0.0004 | ~$0.035 |
+| plan-decomp | ~1 | $0.252 | $0.003 | ~$0.249 |
+| review-body | ~3 | $0.078 | $0.005 | ~$0.073 |
+| threat-draft | ~1 | $0.025 | $0.002 | ~$0.023 |
+| code-hotspot-summary | ~2 | $0.026 | $0.002 | ~$0.025 |
+| commit-msg-draft | ~5 | $0.016 | $0.001 | ~$0.015 |
+| **Total** | | **~$0.44** | **~$0.014** | **~$0.424/sprint** |
+
+### Breaking changes / Migration / Known Limitations
+
+None. Set `SDLC_DRAFT_VERIFY=1` to enable all 7 allowlisted ops.
+
+---
+
+## v1.6.0 — C-2 allowlist expansion: plan-decomp + review-body + threat-draft (2026-06-13)
+
+### Highlights
+
+- **3 new ops added to C-2 draft-verify allowlist** (gpt-5.5 judge, deepseek-v4-pro drafts):
+  - `plan-decomp` (architect/opus tier) — judge_confidence=0.78, net_savings=248,167 µUSD/call
+  - `review-body` (pr-reviewer/sonnet tier) — judge_confidence=0.78, net_savings=24,037 µUSD/call
+  - `threat-draft` (architecture-reviewer/sonnet tier) — judge_confidence=0.78, net_savings=23,488 µUSD/call
+- **Injected-defect libraries** added for all 3 ops; circular-blind-spot guard passes.
+- **Total routable coverage**: 4 op types covering haiku→opus and sonnet tiers.
+
+### Breaking changes / Migration / Known Limitations
+
+None. `SDLC_DRAFT_VERIFY=0` (default) leaves behavior byte-identical.
+
+---
+
+## v1.5.0 — superpowers interop: plan adoption + self-built archival + DEVELOP mapping (2026-06-13)
+
+### Highlights
+
+- **Plan adoption (`/sdlc:plan`)**: before regenerating, checks for an existing plan matching the
+  spec slug — adopts it (marks `plan_self_built: false`) without re-invoking the writing-plans skill.
+- **Archive only self-built (`sprint-archival/archive.sh`)**: adopted plans are preserved; self-built
+  plans are deleted on archival.
+- **DEVELOP.md §13**: documents superpowers ↔ /sdlc command mapping and `plan_self_built` field.
+
+### Breaking changes / Migration / Known Limitations
+
+None. `plan_self_built` absent defaults to `true` (backward compat).
+
+---
+
+## v1.4.0 — C-2 single-phase route: direct v4-pro + inline oracle (2026-06-13)
+
+### Highlights
+
+- **Single-phase route** (`draft-verify.sh route`): scope-hardstop → allowlist → circuit → v4-pro
+  → inline oracle → emit. No `--work` dir, no phases. Preferred over legacy prepare/finalize.
+- **Inline oracle**: non-empty + ≥ min-chars (default 50) + no failure marker on first line.
+- **judgment-eval simplified to 4 gates**: judge-confidence, human-checked, net-savings, tco-ok.
+
+### Breaking changes
+
+- `judgment-eval.sh`: `--recall` and `--recall-floor` args removed.
+
+### Migration
+
+Remove `--recall`/`--recall-floor` from any `judgment-eval.sh` invocations.
+
+---
+
+## v1.3.0 — C-2 judgment-draft-verify: deepseek draft + adversarial verify (2026-06-13)
+
+### Highlights
+
+- **C-2 wires the 87%-of-cost lever**: deepseek drafts draftable judgment ops; claude adversarially
+  verifies in main context. Claude owns the final output — judgment is never fully externalized.
+- **Scope hard-stops (closed set)**: `ga`, `arch-decision`, `security-verdict`, `risk-final`,
+  `release-decision`, `g1–g4-judgment`, `panel-verdict` structurally refused (exit 10), even with
+  a forged allowlist entry.
+- **Injected-defect recall gate**: a known defect is planted; claude's review must surface it.
+  Seven misses in the rolling window trips the circuit breaker.
+- **Circular-blind-spot guard**: `injected-defect-lib.sh validate` requires ≥1 `source: prod-MISSED`
+  or `cross-provider` entry before the library is usable.
+- **spec-scope is now LIVE** (judge_confidence 1.0, net +348 µUSD/route).
+- Skills: `injected-defect-lib`, `probe-power`, `judgment-eval`; enhanced: `draft-verify`.
+
+### Breaking changes / Migration / Known Limitations
+
+None. `SDLC_DRAFT_VERIFY` defaults off — byte-identical to full-claude.
+
+---
+
 ## v1.2.0 — cost-measurement (C-1) (2026-06-13)
 
 > Closes M2's "savings unmeasured" gap: routing savings are now a real, honest number. Telemetry-only —

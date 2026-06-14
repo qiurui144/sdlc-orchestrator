@@ -36,3 +36,26 @@ teardown() {
   run "$ARCHIVE" --sprint 2026-05-28-foo --apply
   grep -q "2026-05-28-foo" RELEASE.md
 }
+
+@test "adopted plan is preserved (plan_self_built=false)" {
+  mkdir -p .sdlc
+  printf '{"phase":"PLAN_APPROVED","plan_self_built":false}' > .sdlc/state.json
+  run "$ARCHIVE" --sprint 2026-05-28-foo --apply
+  [ "$status" -eq 0 ]
+  [ -f docs/superpowers/plans/2026-05-28-foo.md ]
+  grep -q "adopted" RELEASE.md
+}
+
+@test "self-built plan is deleted (plan_self_built=true)" {
+  mkdir -p .sdlc
+  printf '{"phase":"PLAN_APPROVED","plan_self_built":true}' > .sdlc/state.json
+  run "$ARCHIVE" --sprint 2026-05-28-foo --apply
+  [ "$status" -eq 0 ]
+  [ ! -f docs/superpowers/plans/2026-05-28-foo.md ]
+}
+
+@test "no state.json defaults to delete plan (backward compat)" {
+  run "$ARCHIVE" --sprint 2026-05-28-foo --apply
+  [ "$status" -eq 0 ]
+  [ ! -f docs/superpowers/plans/2026-05-28-foo.md ]
+}

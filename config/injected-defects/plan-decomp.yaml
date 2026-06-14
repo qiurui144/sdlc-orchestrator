@@ -1,0 +1,14 @@
+# plan-decomp injected-defect library (C-2).
+# Eval: 2026-06-13, input=JWT Auth Middleware Flask spec, deepseek-v4-pro draft, gpt-5.5 judge.
+# gpt-5.5 SCORE=0.78. Defect below identified independently by gpt-5.5.
+task_type: plan-decomp
+defects:
+  - id: non-atomic-composite-task
+    task_type: plan-decomp
+    defect_type: atomicity-violation
+    planted_patch: >
+      Merge distinct tasks (blueprint registration + error handlers + coverage gate)
+      into a single task, violating 1-task=1-commit rule.
+    detect_marker: "flags-multiple-concerns-in-one-task"
+    source: cross-provider  # gpt-5.5 independently found: task 6 combines wiring+handlers+coverage
+                             # 2026-06-13 eval: gpt-5.5 SCORE=0.78, defect confirmed legitimate

@@ -1,0 +1,15 @@
+# adr-draft injected-defect library (C-2).
+# Eval: 2026-06-13, input=PostgreSQL vs MongoDB ADR, deepseek-v4-pro draft, gpt-5.5 judge.
+# gpt-5.5 SCORE=0.85. Defect below identified independently by gpt-5.5.
+task_type: adr-draft
+defects:
+  - id: missing-alternatives-section
+    task_type: adr-draft
+    defect_type: omission
+    planted_patch: >
+      Omit the alternatives considered section — the ADR describes only the chosen
+      option without mentioning alternatives examined and why they were rejected
+      (e.g., MongoDB with JSON Schema validation, or a hybrid approach).
+    detect_marker: "flags-missing-alternatives-considered"
+    source: cross-provider  # gpt-5.5 independently identified: no explicit alternatives considered
+                             # 2026-06-13 eval: gpt-5.5 SCORE=0.85, defect confirmed legitimate

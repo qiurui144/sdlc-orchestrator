@@ -265,6 +265,58 @@ caller treats it as HIGH (full rigor). The risk_tier is recorded in the handoff 
     executor.sh from inside a subagent prompt; adding a judgment op to the closed map "to test
     routing"; using a deepseek output that exited non-zero.
 
+17. **C-2 draft-verify for draftable JUDGMENT ops (opt-in, `SDLC_DRAFT_VERIFY=1`, default off —
+    byte-identical when off).** deepseek-v4-pro drafts the judgment op; an inline oracle validates
+    the output; the circuit breaker guards quality at runtime. Judgment is never fully externalized
+    (claude still owns the final in high-stakes cases; all scope hard-stops remain). When
+    `SDLC_DRAFT_VERIFY=1` AND the op is allowlisted AND NOT in the forbidden closed set:
+
+    **Single-phase route — runs in MAIN context via Bash (never inside a dispatched subagent):**
+
+    `draft-verify.sh route --op <op> --input <f> --out <final> --allowlist <f>`
+    - exit 10 (`decision=route-claude-*`) → op is not routable (disabled / scope-hardstop /
+      not-allowlisted / breaker-open / provider-fail / oracle-fail). Do the normal full-claude
+      dispatch; behavior is byte-identical to pre-C2. **No special handling needed.**
+    - exit 0 (`decision=route-deepseek-ok`) → use the deepseek draft at `--out` directly.
+
+    **Oracle (inline quality gate):** output must be non-empty + ≥ min_chars (default 50) + first
+    line must not start with `I cannot` / `I'm unable` / `Error:`. Oracle-fail → records a circuit
+    failure; >6 failures in the last 20 routes → circuit-breaker opens → fallback to full claude.
+
+    **Scope hard-stops (closed set):** GA / arch-decision / security-verdict / risk-final /
+    release-decision / g1-judgment through g4-judgment / panel-verdict. `route` exits 10
+    (`route-claude-scope-hardstop`) for any of these **before** consulting the allowlist.
+    A forged allowlist entry cannot override the closed set.
+
+    **Currently allowlisted ops** (updated 2026-06-14, N=3 multi-seed, gpt-5.5 cross-judge):
+
+    | op | preferred_provider | score (N=3 mean±std) | net_savings (µUSD) | typical defects to review |
+    |----|-------------------|--------------------|-------------------|--------------------------|
+    | `spec-scope` | **qwen** | 0.79±0.02 | 348 | overclaim, scope creep in in-scope list |
+    | `plan-decomp` | deepseek | 0.81±0.02 | 248,167 | non-atomic tasks, missing acceptance tests |
+    | `review-body` | deepseek | 0.80±0.07 | 24,037 | false positives, off-by-one in test counts |
+    | `threat-draft` | **qwen** | 0.87±0.03 | 23,488 | missing alg-confusion, HS256 ≠ non-repudiation |
+    | `adr-draft` | deepseek | 0.81±0.05 | 35,275 | missing alternatives-considered section |
+    | `code-hotspot-summary` | **qwen** | 0.85±0.07 | 12,369 | inverted risk ranking (stable files > high-churn) |
+    | `commit-msg-draft` | **qwen** | 0.87±0.02 | 2,961 | body describes what instead of why |
+
+    Provider routing: `preferred_provider` in `config/draft-verify-allowlist.yaml`. If qwen is
+    unconfigured (`QWEN_API_KEY` unset), `draft-verify.sh` auto-falls-back to deepseek (exit 6 path).
+    qwen-plus is 18.7× cheaper and 57× faster than deepseek-v4-pro for simple structured tasks;
+    deepseek retains advantage for complex reasoning (plan-decomp, review-body, adr-draft).
+
+    **Rejected ops** (Gate 1 fail — not eligible): `postmortem-draft` (0.66 < 0.70 floor;
+    action items lack owner+deadline, 5-Why stops at code not process). Do NOT add to allowlist.
+
+    **Offline eligibility gate:** `judgment-eval.sh` evaluates an op offline (cross-provider judge
+    panel + human-checked + net-savings + tco_ok — four gates, one-vote-veto) and writes to the
+    allowlist only if all pass. Circular-blind-spot guard lives at the injected-defect library
+    layer (`injected-defect-lib.sh validate`) — developers must run it before calling judgment-eval.
+
+    Anti-patterns: invoking draft-verify.sh inside a dispatched subagent (subagents lack Bash; the
+    M2/web-ui lesson); using the `prepare`/`finalize` two-phase path for new ops (use `route`);
+    adding a forbidden op to the allowlist "to test routing"; trusting a non-zero route exit.
+
 ---
 
 ## Cross-feature orchestration (v0.11, drive mode)

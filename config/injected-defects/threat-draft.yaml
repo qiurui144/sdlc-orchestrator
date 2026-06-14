@@ -1,0 +1,34 @@
+# threat-draft injected-defect library (C-2).
+# Eval: 2026-06-13, input=JWT Auth Service STRIDE request, deepseek-v4-pro draft, gpt-5.5 judge.
+# gpt-5.5 SCORE=0.78. Defects below identified independently by gpt-5.5.
+task_type: threat-draft
+defects:
+  - id: missing-algorithm-confusion
+    task_type: threat-draft
+    defect_type: omission
+    planted_patch: >
+      Omit JWT algorithm confusion attack (alg:none, header injection, RS/HS confusion)
+      from the threat model — a well-known attack class for HS256 services.
+    detect_marker: "flags-missing-algorithm-confusion-threat"
+    source: cross-provider  # gpt-5.5 independently found: missing alg:none + algorithm enforcement
+                             # 2026-06-13 eval: gpt-5.5 SCORE=0.78, defect confirmed legitimate
+  - id: false-repudiation-claim
+    task_type: threat-draft
+    defect_type: false-positive
+    planted_patch: >
+      Claim signed JWT provides "non-repudiable proof of issuance" under HS256 (shared secret),
+      when HS256 means any party holding the shared secret can forge tokens — HMAC is not a
+      digital signature and does not provide non-repudiation.
+    detect_marker: "flags-hs256-hmac-not-nonrepudiable"
+    source: cross-provider  # gpt-5.5 independently identified: HS256 shared secret ≠ non-repudiation
+                             # 2026-06-13 eval; this is a well-known cryptography distinction
+  - id: missing-stride-info-disclosure
+    task_type: threat-draft
+    defect_type: omission
+    planted_patch: >
+      Omit token storage side-channel under Information Disclosure: client-side storage of JWT
+      in localStorage exposes the token to XSS exfiltration; omit the mitigation (httpOnly cookie).
+    detect_marker: "flags-missing-localstorage-xss-token-leak"
+    source: cross-provider  # qwen-plus eval (N=3, 2026-06-14): score 0.87±0.03; qwen consistently
+                             # flags XSS-token-leak in localStorage; deepseek variance 0.10 on this
+                             # defect class. Added to broaden injected-defect coverage for qwen path.
